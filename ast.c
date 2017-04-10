@@ -56,6 +56,20 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return head;
 	}
+	else if(nt==IDLIST){
+		ParseTreeNode *typenode=itr->sibling->sibling;
+		head = make_id_node(itr->left,typenode);
+		ParseTreeNode *n1=itr->left->sibling;
+		ASTNode *ast_it=head;
+		while(n1->left->nodeSymbol.ele.term!=EPSILON){
+			ParseTreeNode *temp=n1->left->sibling;
+			ast_it->sibling=make_id_node(temp,typenode);
+			ast_it->sibling->parent=parent;
+			ast_it=ast_it->sibling;
+			n1=temp->sibling;
+		}
+		return head;
+	}
 	else{
 		if(proot->left->nodeSymbol.t==TERMINAL&&proot->left->nodeSymbol.ele.term==EPSILON){
 		head = create_ast_node();
@@ -81,6 +95,51 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 	return head;
 }
 
+ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent){
+	ASTNode *temp=create_ast_node();
+	temp->parent=parent;
+	temp->t=node->nodeSymbol.t;
+	temp->gnode.non_term=node->nodeSymbol.ele.non_term;
+	ParseTreeNode *child=node->left;
+	temp->sign=1;
+	if(child->nodeSymbol.t==TERMINAL&&
+		(child->nodeSymbol.ele.term==MINUS||child->nodeSymbol.ele.term==PLUS)){
+		temp= resolve_var(child->sibling,parent);
+		if(child->nodeSymbol.ele.term==MINUS) temp->sign=-1;
+	}
+	else{
+		if(child->nodeSymbol.t==TERMINAL&&(child->nodeSymbol.ele.term==INTEGER||child->nodeSymbol.ele.term==REAL)){
+			temp->tokenptr=child->tokenptr;
+			temp->vartype=0;
+			if(child->nodeSymbol.ele.term==INTEGER)
+				temp->value.num= child->tokenptr->lexeme.num;
+			else
+				temp->value.r_num= child->tokenptr->lexeme.r_num;
+		}
+		else{
+			ParseTreeNode *which = child->sibling->left;
+			if(which->nodeSymbol.t==TERMINAL&&which->nodeSymbol.ele.term==EPSILON){
+				temp->tokenptr=child->tokenptr;
+				temp->vartype=1;
+			}
+			else{
+				temp->vartype=2;
+				temp->child=create_ast_node();
+				temp->child->parent=temp;
+				temp->child->gnode.term=child->nodeSymbol.ele.term;
+				temp->child->t=child->nodeSymbol.t;
+				temp->child->tokenptr=child->tokenptr;
+				ASTNode *sib=create_ast_node();
+				sib->parent=temp;
+				sib->gnode.term=which->sibling->nodeSymbol.ele.term;
+				sib->t=which->sibling->nodeSymbol.t;
+				sib->tokenptr=which->sibling->tokenptr;
+				temp->child->sibling=sib;
+			}
+		}
+	}
+	return temp;
+}
 
 ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	if(proot==NULL) return NULL;
@@ -156,9 +215,56 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		return root;
 	}
 	/*TODO : Statements and Beyond */
-
-
-
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENTS){
+		root->child = compressList(proot,root);
+		root->scope=1; //ADD SCOPE
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENT){
+		ASTNode *temp = genAST(proot->left,root);
+		root->child=temp->child;
+		root->stmttype = temp->stmttype;
+		ASTNode *it=root->child;
+		while(it!=NULL){
+			it->parent=root;
+			it=it->sibling;
+		}
+		return root;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==IOSTMT){
+		root->stmttype=0;
+		root->child= create_ast_node();
+		root->child->parent=root;
+		root->child->t=TERMINAL;
+		root->child->tokenptr=proot->tokenptr;
+		root->child->gnode.term=proot->left->nodeSymbol.ele.term;
+		if(root->child->gnode.term==GET_VALUE){
+			ASTNode *temp= create_ast_node();
+			temp->t=TERMINAL;
+			temp->parent=root;
+			temp->gnode.term=proot->left->sibling->sibling->nodeSymbol.ele.term;
+			temp->tokenptr=proot->left->sibling->sibling->tokenptr;
+			root->child->sibling=temp;
+		}
+		else{
+			root->child->sibling = resolve_var(proot->left->sibling->sibling,root);
+		}
+		return root;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==SIMPLESTMT){
+		root->stmttype=1;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DECLARESTMT){
+		root->stmttype=2;
+		ParseTreeNode *idlist=proot->left->sibling;
+		root->child = compressList(idlist,root);
+		return root;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==CONDITIONALSTMT){
+		root->stmttype=3;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ITERATIVESTMT){
+		root->stmttype=4;
+	}
 	else{
 		ASTNode *root = create_ast_node();
 		root->t=proot->nodeSymbol.t;

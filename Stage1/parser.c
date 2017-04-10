@@ -1400,7 +1400,7 @@ ParseTreeNode* parseInputSourceCode(char *testcaseFile, int flag){
     populateParseTree(root, &fp, flag);
     if(flag)
         printf("\nSyntax checking complete,Correct Syntax!!\n");
-    return root; 
+    return root;
 }
 
 void __printParseTree(FILE *fp, ParseTreeNode *root){

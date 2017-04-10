@@ -15,7 +15,7 @@ struct ASTNode{
 	//Arithmetic or Boolean Nodes non-terminals==
 	GNodeType gnode;
 	tag t;
-	valueAST ast;
+	valueAST value;
 	//==
 	//ID or Module name==
 	int dtype;
@@ -27,6 +27,12 @@ struct ASTNode{
 	tokenInfo *tokenptr;
 	//==
 	//For operators
+	// STMT TYPE
+	int stmttype;
+	//if IOSTMT
+	//VAR
+	int vartype;
+	int sign;
 	struct ASTNode *lop,*rop;
 	//Family
 	struct ASTNode *parent,*child,*sibling;
