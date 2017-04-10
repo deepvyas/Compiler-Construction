@@ -63,6 +63,7 @@ typedef enum{
 	DEFAULTNT,
 	ITERATIVESTMT,
 	NEGVAR,
+	XXX
 }NonTerminal;
 
 typedef TokenType Terminal;

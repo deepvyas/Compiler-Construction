@@ -33,6 +33,8 @@ struct ASTNode{
 	//VAR
 	int vartype;
 	int sign;
+	// ITERTIVESMT
+	int looptype;
 	struct ASTNode *lop,*rop;
 	//Family
 	struct ASTNode *parent,*child,*sibling;

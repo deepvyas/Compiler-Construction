@@ -36,7 +36,7 @@ char nt[noNonTerminals][100] = {
     "ARITHMETICEXPR",	"N4",	"TERM",	"N5",	"FACTOR",	"LOGICALOP",
     "RELATIONALOP",	"OP1",	"OP2",	"DECLARESTMT",	"CONDITIONALSTMT",
 	"CASESTMTS",	"N9",	"VALUE",	"DEFAULTNT", /////
-	"ITERATIVESTMT", "NEGVAR"};
+	"ITERATIVESTMT", "NEGVAR", "XXX"};
 
 char ter[noTerminals][100] = {
 	"INTEGER", 
@@ -203,6 +203,7 @@ void populateGrammar(){
 	grammar[1][2].ele.non_term = MODULEDECLARATIONS;
 	grammar[1][2].t = NONTERMINAL;
 
+  	
   grammar[2][0].ele.non_term = MODULEDECLARATIONS;
 	grammar[2][0].t = NONTERMINAL;
 	grammar[2][0].len = 1;
@@ -657,17 +658,23 @@ void populateGrammar(){
 	grammar[51][1].ele.non_term = ARITHMETICORBOOLEANEXPR;
 	grammar[51][1].t = NONTERMINAL;
 
-	grammar[52][0].ele.non_term = EXPRESSION;
+	// grammar[52][0].ele.non_term = EXPRESSION;
+	// grammar[52][0].t = NONTERMINAL;
+	// grammar[52][0].len = 4;
+	// grammar[52][1].ele.term = MINUS;
+	// grammar[52][1].t = TERMINAL;
+	// grammar[52][2].ele.term = BO;
+	// grammar[52][2].t = TERMINAL;
+	// grammar[52][3].ele.non_term = ARITHMETICEXPR;
+	// grammar[52][3].t = NONTERMINAL;
+	// grammar[52][4].ele.term = BC;
+	// grammar[52][4].t = TERMINAL;
+
+	grammar[52][0].ele.non_term = XXX;
 	grammar[52][0].t = NONTERMINAL;
-	grammar[52][0].len = 4;
-	grammar[52][1].ele.term = MINUS;
-	grammar[52][1].t = TERMINAL;
-	grammar[52][2].ele.term = BO;
-	grammar[52][2].t = TERMINAL;
-	grammar[52][3].ele.non_term = ARITHMETICEXPR;
-	grammar[52][3].t = NONTERMINAL;
-	grammar[52][4].ele.term = BC;
-	grammar[52][4].t = TERMINAL;
+	grammar[52][0].len = 1;
+	grammar[52][1].ele.non_term = VAR;
+	grammar[52][1].t = NONTERMINAL;
 	
 	grammar[53][0].ele.non_term = ARITHMETICORBOOLEANEXPR;
 	grammar[53][0].t = NONTERMINAL;
@@ -767,9 +774,11 @@ void populateGrammar(){
 	
 	grammar[65][0].ele.non_term = FACTOR;
 	grammar[65][0].t = NONTERMINAL;
-	grammar[65][0].len = 1;
-	grammar[65][1].ele.non_term = VAR;
-	grammar[65][1].t = NONTERMINAL;	
+	grammar[65][0].len = 2;
+	grammar[65][1].t = TERMINAL;
+	grammar[65][1].ele.term = MINUS;
+	grammar[65][2].ele.non_term = XXX;
+	grammar[65][2].t = NONTERMINAL;	
 
 	grammar[66][0].ele.non_term = OP1;
 	grammar[66][0].t = NONTERMINAL;
@@ -1021,7 +1030,7 @@ void populateGrammar(){
 	grammar[92][1].ele.term = EPSILON;
 	grammar[92][1].t = TERMINAL;
 
-	grammar[93][0].ele.non_term = FACTOR;
+	grammar[93][0].ele.non_term = XXX;
 	grammar[93][0].t = NONTERMINAL;
 	grammar[93][0].len = 3;
 	grammar[93][1].ele.term =BO;
@@ -1031,13 +1040,19 @@ void populateGrammar(){
 	grammar[93][3].ele.term = BC;
 	grammar[93][3].t = TERMINAL;
 
-	grammar[94][0].ele.non_term = VAR;
+	// grammar[94][0].ele.non_term = VAR;
+	// grammar[94][0].t = NONTERMINAL;
+	// grammar[94][0].len = 2;
+	// grammar[94][1].ele.term = MINUS;
+	// grammar[94][1].t = TERMINAL;
+	// grammar[94][2].ele.non_term = NEGVAR;
+	// grammar[94][2].t = NONTERMINAL;
+
+	grammar[94][0].ele.non_term = FACTOR;
 	grammar[94][0].t = NONTERMINAL;
-	grammar[94][0].len = 2;
-	grammar[94][1].ele.term = MINUS;
-	grammar[94][1].t = TERMINAL;
-	grammar[94][2].ele.non_term = NEGVAR;
-	grammar[94][2].t = NONTERMINAL;
+	grammar[94][0].len = 1;
+	grammar[94][1].ele.non_term = XXX;
+	grammar[94][1].t = NONTERMINAL;
 
 	grammar[95][0].ele.non_term = NEGVAR;
 	grammar[95][0].t = NONTERMINAL;
@@ -1067,6 +1082,8 @@ void populateGrammar(){
 	grammar[98][1].t = TERMINAL;
 	grammar[98][2].ele.non_term = NEGVAR;
 	grammar[98][2].t = NONTERMINAL;
+
+		
 
 }
 
@@ -1311,17 +1328,17 @@ ParseTreeNode* getGrammarRules(ParseTreeNode *root, int grammarIndex){
     }
     ParseTreeNode *xxx = ptr;
 
-	  /*printf("\nGrammarIndex : %d", grammarIndex);
-	  while(xxx != NULL){
-	    if(xxx->nodeSymbol.t == TERMINAL){
-	        printf("%s ", ter[xxx->nodeSymbol.ele.term]);
-	    }
-	    else{
-	          printf("%s ", nt[xxx->nodeSymbol.ele.non_term]);
-	    }
-	      xxx = xxx->sibling;
-	  }
-		 */   
+    /*    printf("\nGrammarIndex : %d ", grammarIndex);
+        while(xxx != NULL){
+            if(xxx->nodeSymbol.t == TERMINAL){
+                printf("%s ", ter[xxx->nodeSymbol.ele.term]);
+            }
+            else{
+                printf("%s ", nt[xxx->nodeSymbol.ele.non_term]);
+            }
+            xxx = xxx->sibling;
+        }
+    */
     return ptr;
 }
 
@@ -1335,16 +1352,16 @@ void populateParseTree(ParseTreeNode *root, FILE **fp, int flag){
         if (currentToken == NULL){
             return;
         }
-        // if (flag)
-        //   printf("Current Token : \"%s\"\n", currentToken->lexeme.iden);
+         //if (flag)
+         //  printf("Current Token : \"%s\"\n", currentToken->lexeme.iden);
     }
     if (root->nodeSymbol.t == TERMINAL){
         // this is a leaf
         root->isLeaf = true;
         if (currentToken->token == root->nodeSymbol.ele.term){
             root->tokenptr = currentToken;
-            // if (flag)
-            //     printf("Token used : %s\n", ter[currentToken->token]);
+            //if (flag)
+            //  printf("Token used : %s\n", ter[currentToken->token]);
             currentToken = NULL;
         }
         else if(root->nodeSymbol.ele.term != EPSILON){
@@ -1445,13 +1462,13 @@ void __printParseTree(FILE *fp, ParseTreeNode *root){
             fprintf(fp, "%-16s %-16s %-16s %-16s %-26s %-16s %-16s\n",
                     na, na, na, na, 
                     roots, no,
-                    ter[root->nodeSymbol.ele.term]);
+                    nt[root->nodeSymbol.ele.non_term]);
         }
         else {
             fprintf(fp, "%-16s %-16s %-16s %-16s %-26s %-16s %-16s\n",
                     na, na, na, na, 
                     nt[root->parent->nodeSymbol.ele.non_term], no,
-                    ter[root->nodeSymbol.ele.term]);
+                    nt[root->nodeSymbol.ele.non_term]);
         }
  
     }
