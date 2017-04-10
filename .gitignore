@@ -2,5 +2,5 @@
 *.fuse_hidden*
 *.txt
 a.out
-*.gch
+*.h.gch
 
