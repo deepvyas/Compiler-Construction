@@ -35,6 +35,8 @@ struct ASTNode{
 	int sign;
 	// ITERTIVESMT
 	int looptype;
+	//IDLIST OR STATEMENT LIST 
+	int listcount;
 	struct ASTNode *lop,*rop;
 	//Family
 	struct ASTNode *parent,*child,*sibling;
