@@ -243,15 +243,15 @@ ASTNode* resolve_assgn_stmt(ParseTreeNode *node,ASTNode *parent){
 		var->child->gnode.term=node->left->nodeSymbol.ele.term;
 		var->child->t=node->left->nodeSymbol.t;
 		var->child->tokenptr=node->left->tokenptr;
-		ParseTreeNode *lvauearrchild = whichstmt->left->left;
+		ParseTreeNode *lvaluearrchild = whichstmt->left->left;
 		ASTNode *sib=create_ast_node();
 		sib->parent=var;
-		sib->gnode.term=lvauearrchild->sibling->left->nodeSymbol.ele.term;
-		sib->t=lvauearrchild->sibling->left->nodeSymbol.t;
-		sib->tokenptr=lvauearrchild->sibling->left->tokenptr;
+		sib->gnode.term=lvaluearrchild->sibling->left->nodeSymbol.ele.term;
+		sib->t=lvaluearrchild->sibling->left->nodeSymbol.t;
+		sib->tokenptr=lvaluearrchild->sibling->left->tokenptr;
 		var->child->sibling=sib;
 		head->child=var;
-		head->child->sibling= genAST(lvauearrchild->sibling->sibling->sibling->sibling,head);
+		head->child->sibling= genAST(lvaluearrchild->sibling->sibling->sibling->sibling,head);
 	}
 	return head;
 }
@@ -412,6 +412,13 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEREUSESTMT){
 		ASTNode *temp= resolve_module_stmt(proot,root);
+		root->child = temp->child;
+		ASTNode *it= root->child;
+		while(it!=NULL){
+			it->parent=root;
+			it=it->sibling;
+		}
+		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DECLARESTMT){
 		root->stmttype=DECLARESTMT;
