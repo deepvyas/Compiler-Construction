@@ -371,10 +371,10 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	else if(proot->nodeSymbol.t==NONTERMINAL&&
 		(proot->nodeSymbol.ele.non_term==INPUTPLIST||proot->nodeSymbol.ele.non_term==OUTPUTPLIST)){
 		root->child = compressList(proot,root);
-	return root;
+		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEDEF){
-	root->child = genAST(proot->left->sibling,root);
+		root->child = genAST(proot->left->sibling,root);
 		root->scope= 1; // ADD SCOPE;
 		return root;
 	}
@@ -495,11 +495,11 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
-	else if(proot->nodeSymbol.t==NONTERMINAL&&
-		proot->nodeSymbol.ele.non_term==ARITHMETICORBOOLEANEXPR&&
-		proot->nodeSymbol.ele.non_term==ANYTERM&&
-		proot->nodeSymbol.ele.non_term==ARITHMETICEXPR&&
-		proot->nodeSymbol.ele.non_term==TERM){
+	else if(proot->nodeSymbol.t==NONTERMINAL&&(
+		proot->nodeSymbol.ele.non_term==ARITHMETICORBOOLEANEXPR||
+		proot->nodeSymbol.ele.non_term==ANYTERM||
+		proot->nodeSymbol.ele.non_term==ARITHMETICEXPR||
+		proot->nodeSymbol.ele.non_term==TERM)){
 		//Go till EPSILON
 		ParseTreeNode *tempPtr = proot->left->sibling;
 		while(tempPtr->left->nodeSymbol.ele.non_term!=EPSILON){
@@ -508,6 +508,22 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		ASTNode *tempast = resolve_exp_recursive(tempPtr,root);   
     // do herea
     return tempast;
+	}
+	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==FACTOR){
+		ParseTreeNode *xxx;
+		if(proot->left->nodeSymbol.ele.term==MINUS){
+			root->sign=-1;
+			xxx=proot->left->sibling;
+		}
+		else{
+			xxx=proot->left;
+		}
+		if(xxx->left->nodeSymbol.t==TERMINAL&&xxx->left->nodeSymbol.ele.term==BO){
+			return genAST(xxx->left->sibling,parent);
+		}
+		else{
+			return resolve_var(xxx->left,parent);
+		}
 	}
 	else{
 		ASTNode *root = create_ast_node();
@@ -520,8 +536,15 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 
 void _printAST(ASTNode *ast_root){
 	if(ast_root==NULL) return;
-	if(ast_root->child!=NULL)
+	if(ast_root->child!=NULL){
 		printf("Child of %d : %d",ast_root->gnode.non_term,ast_root->child->gnode.non_term);
+	}
+	else if(ast_root->lop!=NULL&&ast_root->rop!=NULL){
+		printf("Left Op is : %d and Right Op is : %d \n",ast_root->lop->gnode.non_term,ast_root->rop->gnode.non_term);
+		_printAST(ast_root->lop);
+		_printAST(ast_root->rop);
+		return;
+	}
 	else{
 		if(ast_root->tokenptr!=NULL){
 			if(ast_root->gnode.term==ID){
