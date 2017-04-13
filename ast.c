@@ -287,6 +287,32 @@ ASTNode* resolve_module_stmt(ParseTreeNode *node,ASTNode *parent){
 	return head;
 }
 
+ASTNode* resolve_gen_recursive(ParseTreeNode *tempPtr){
+    ASTNode *AT = create_ast_node();
+    if (tempPtr->nodeSymbol.ele.non_term != tempPtr->parent->nodeSymbol.ele.non_term){
+        AT->this = tempPtr->parent->left; // AT1    
+        //GenAST here
+    }
+    else{
+        AT->this = tempPtr->parent->left->sibling;
+    }
+    if (tempPtr->left == EPSILON)
+        return AT;
+    
+    ASTNode *head = create_ast_node();
+    
+    head->this = tempPtr->left; // LOP1
+    head->lop = AT;
+    head->child = AT;
+    AT->parent = head;
+    head->rop = resolve_gen_recursive(tempPtr->left->sibling->sibling);
+    head->rop->parent = head;
+    head->lop->sibling = head->rop;
+    head->rop->sibling = NULL;
+    return head;
+}
+    
+
 ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	if(proot==NULL) return NULL;
 	/*Program Non-Terminal which stores all child*/
@@ -467,6 +493,12 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+    else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ARITHMETICORBOOLEANEXPR){
+        //root->child = genAST(proot->left, root);
+        tempPtr = proot->left->sibling;
+        ASTNode *tempast = resolve_gen_recursive(tempPtr);   
+        // do herea
+    }
 	else{
 		ASTNode *root = create_ast_node();
 		root->t=proot->nodeSymbol.t;
