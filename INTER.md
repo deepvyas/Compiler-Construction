@@ -2,7 +2,7 @@
 	```
 	child ==> var node ==> check type of var node
 		if type==1 : only 1 child which holds tokenptr of id;
-		if type==2 : two child first for for token of id and secons one 			     for token of index 
+		if type==2 : two child first for for token of id and second one for token of index 
 	child->sibling ==> expression
 
 	assign value of expr to var node;
