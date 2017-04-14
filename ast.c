@@ -464,7 +464,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child= create_ast_node();
 		root->child->parent=root;
 		root->child->t=TERMINAL;
-		root->child->tokenptr=proot->tokenptr;
+		//root->child->tokenptr=proot->tokenptr;
 		root->child->gnode.term=proot->left->nodeSymbol.ele.term;
 		if(root->child->gnode.term==GET_VALUE){
 			ASTNode *temp= create_ast_node();
@@ -545,7 +545,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child->sibling->sibling = genAST(casestmt->sibling,root);
 		return root;
 	}
-	/**/
+	/* Two children if for then id and stmnts, if while then expressions and stmnts */
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ITERATIVESTMT){
 		root->stmttype=ITERATIVESTMT;
 		ParseTreeNode *child=proot->left;
