@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include "ASTDef.h"
 
-
 ASTNode* create_ast_node(){
 	ASTNode* node;
 	node = (ASTNode*)malloc(1*sizeof(ASTNode));
+	node->child=NULL;
+	node->parent=NULL;
+	node->sibling=NULL;
 	return node;
 }
 
@@ -121,7 +123,7 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		if(itr->left->sibling->nodeSymbol.ele.term==INTEGER){
 			head->value.num= itr->left->sibling->tokenptr->lexeme.num;
 		}
-		else if(itr->left->sibling->nodeSymbol.ele.term==INTEGER){
+		else if(itr->left->sibling->nodeSymbol.ele.term==TRUE){
 			head->value.tval=1;
 		}
 		else{
@@ -341,12 +343,12 @@ ASTNode* resolve_exp_recursive(ParseTreeNode *node,ASTNode *parent){
 
 ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	if(proot==NULL) return NULL;
-/*Program Non-Terminal which stores all child*/
 	ASTNode *root = create_ast_node();
 	root->t=proot->nodeSymbol.t;
 	root->gnode.non_term=proot->nodeSymbol.ele.non_term;
 	root->parent=parent;
 	root->tokenptr=NULL;
+	/*Program Non-Terminal which stores all child*/
 	if(proot->nodeSymbol.t==NONTERMINAL && proot->nodeSymbol.ele.non_term==PROGRAMNT){
 		root->child=genAST(proot->left,root);
 		ASTNode *ast_it=root->child;
@@ -358,18 +360,21 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/* ** ModuleDeclarations and OtherModules List of Module Nodes as child*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&
 		(proot->nodeSymbol.ele.non_term==MODULEDECLARATIONS||
 			proot->nodeSymbol.ele.non_term==OTHERMODULES)){
 		root->child = compressList(proot,root);
 		return root;
   }
+  /*tokenptr which has ID*/
   else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEDECLARATION){
   	root->child=NULL;
   	root->tokenptr = proot->left->sibling->sibling->tokenptr;
 		// Enter into Symbol Table;
   	return root;
   }
+  /*drivermodule node has child MODULEDEF and tokenptr for driver.*/
   else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DRIVERMODULE){
   	root->tokenptr = proot->left->sibling->tokenptr;
 		root->scope=1; //TODO : SCOPE NUMBER FIXING
@@ -380,6 +385,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child = genAST(it,root);
 		return root;
 	}
+	/*Has name of module in tokenptr and three children INPUTPLIST OUTPUTLIST and MODULEDEF*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULENT){
 		ParseTreeNode *it = proot->left;
 		root->tokenptr= it->sibling->sibling->tokenptr;
@@ -402,11 +408,13 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child->sibling->sibling = genAST(it->sibling,root);
 		return root;
 	}
+	/*Has a list of child as IDs*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&
 		(proot->nodeSymbol.ele.non_term==INPUTPLIST||proot->nodeSymbol.ele.non_term==OUTPUTPLIST)){
 		root->child = compressList(proot,root);
 		return root;
 	}
+	/*Has a list of child each of which is a STATEMENT*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEDEF){
 		root->startscope = proot->left->tokenptr->line_no;
 		root->endscope= proot->left->sibling->sibling->tokenptr->line_no;
@@ -422,12 +430,14 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->scope= 1; // ADD SCOPE;
 		return root;
 	}
+	/*Has a dummy node which has child as list of STATEMENT*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENTS){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
 		root->child = compressList(proot,root);
 		root->scope=1; //ADD SCOPE
 	}
+	/* A node which has stmttype as type of statement and corresponding child structure from the stmttype*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENT){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
@@ -441,6 +451,9 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/* Has a child for type of IO and sibling which :
+			1. has a node with tokenptr for ID if GET_VALUE
+			2. has a var node if PRINT */
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==IOSTMT){
 		root->stmttype=IOSTMT;
 		root->startscope=parent->startscope;
@@ -465,6 +478,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/*Has a child for ASSIGNMENTSTMT or MODULEREUSESTMT*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==SIMPLESTMT){
 		root->stmttype=SIMPLESTMT;
 		root->startscope=parent->startscope;
@@ -472,6 +486,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child = genAST(proot->left,root);
 		return root;
 	}
+	/*Has child with one node for VAR and other for EXPRESSION*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ASSIGNMENTSTMT){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
@@ -484,10 +499,14 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/*Node has tokenptr for ID of MODULE and two child one is IDLIST(list_of_assgn) and other IDLIST(list_of_id)*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEREUSESTMT){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
 		ASTNode *temp= resolve_module_stmt(proot,root);
+		root->t=temp->t;
+		root->gnode.non_term=temp.gnode.non_term;
+		root->tokenptr= proot->left->sibling->sibling->sibling->tokenptr;
 		root->child = temp->child;
 		ASTNode *it= root->child;
 		while(it!=NULL){
@@ -496,6 +515,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/*List of IDs with dtype field */
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DECLARESTMT){
 		root->stmttype=DECLARESTMT;
 		root->startscope=parent->startscope;
@@ -504,6 +524,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child = compressList(idlist,root);
 		return root;
 	}
+	/*Has one child as ID on which case is based, next child of CASESTMTS and next if present of DEFAULTNT*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==CONDITIONALSTMT){
 		root->stmttype=CONDITIONALSTMT;
 		ParseTreeNode *id=proot->left->sibling->sibling;
@@ -521,6 +542,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child->sibling->sibling = genAST(casestmt->sibling,root);
 		return root;
 	}
+	/**/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ITERATIVESTMT){
 		root->stmttype=ITERATIVESTMT;
 		ParseTreeNode *child=proot->left;
@@ -549,12 +571,16 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/*Has a list of CASE nodes which have :
+			1. tokenptr and value for case
+			2. STATEMENTS child which has a list of STATEMENT child which have corresponding statement as child.*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==CASESTMTS){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
 		root->child = compressList(proot,root);
 		return root;
 	}
+	/*Has child STATEMENTS which has child STATEMENT which has corresponding behaviour*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DEFAULTNT){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
@@ -566,6 +592,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/*Has child as corresponding tree of expression*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==EXPRESSION){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
@@ -578,6 +605,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		}
 		return root;
 	}
+	/**/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&(
 		proot->nodeSymbol.ele.non_term==ARITHMETICORBOOLEANEXPR||
 		proot->nodeSymbol.ele.non_term==ANYTERM||
@@ -594,6 +622,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
     // do herea
     return tempast;
 	}
+	/*Has sign of node and corresponding VAR node.*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==FACTOR){
 		ParseTreeNode *xxx;
 		if(proot->left->nodeSymbol.ele.term==MINUS){
@@ -610,6 +639,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			return resolve_var(xxx->left,parent);
 		}
 	}
+	/**/
 	else{
 		ASTNode *root = create_ast_node();
 		root->t=proot->nodeSymbol.t;
@@ -662,6 +692,7 @@ void _printAST(ASTNode *ast_root){
 		it=it->sibling;
 	}
 }
+
 int main(int argc,char* argv[]){
 	initTable();
 	populateGrammar();
