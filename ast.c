@@ -44,6 +44,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 	if(nt==INPUTPLIST||nt==OUTPUTPLIST){
 		ParseTreeNode *typenode = itr->left->sibling->sibling;
 		head = make_id_node(itr->left,typenode);
+		head->startscope=parent->startscope;
+		head->endscope=parent->endscope;
 		head->parent=parent;
 		int cnt=1;
 		ParseTreeNode *n1=typenode->sibling;
@@ -51,6 +53,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		while(n1->left->nodeSymbol.ele.term!=EPSILON){
 			ParseTreeNode *temp=n1->left->sibling;
 			ast_it->sibling=make_id_node(temp,temp->sibling->sibling);
+			ast_it->sibling->startscope=parent->startscope;
+			ast_it->sibling->endscope=parent->endscope;
 			ast_it->sibling->parent=parent;
 			cnt++;
 			ast_it=ast_it->sibling;
@@ -62,6 +66,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 	else if(nt==IDLIST&&parent->gnode.non_term==DECLARESTMT){
 		ParseTreeNode *typenode=itr->sibling->sibling;
 		head = make_id_node(itr->left,typenode);
+		head->startscope=parent->startscope;
+		head->endscope=parent->endscope;
 		head->parent=parent;
 		int cnt=1;
 		ParseTreeNode *n1=itr->left->sibling;
@@ -69,6 +75,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		while(n1->left->nodeSymbol.ele.term!=EPSILON){
 			ParseTreeNode *temp=n1->left->sibling;
 			ast_it->sibling=make_id_node(temp,typenode);
+			ast_it->sibling->startscope=parent->startscope;
+			ast_it->sibling->endscope=parent->endscope;
 			ast_it->sibling->parent=parent;
 			cnt++;
 			ast_it=ast_it->sibling;
@@ -84,6 +92,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		head->t=itr->left->nodeSymbol.t;
 		head->gnode.term=itr->left->nodeSymbol.ele.term;
 		head->tokenptr=itr->left->tokenptr;
+		head->startscope=parent->startscope;
+		head->endscope=parent->endscope;
 		ParseTreeNode *it=itr->left->sibling;
 		ASTNode *ast_it=head;
 		while(it->left->nodeSymbol.ele.non_term!=EPSILON){
@@ -93,6 +103,8 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 			temp->t=it->left->sibling->nodeSymbol.t;
 			temp->gnode.term=it->left->sibling->nodeSymbol.ele.term;
 			temp->tokenptr=it->left->sibling->tokenptr;
+			temp->startscope=parent->startscope;
+			temp->endscope=parent->endscope;
 			ast_it->sibling=temp;
 			ast_it=ast_it->sibling;
 			it=it->left->sibling->sibling;
@@ -154,16 +166,22 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 			head->parent=parent;
 			head->child=NULL;
 			head->sibling=NULL;
+			head->startscope=parent->startscope;
+			head->endscope=parent->endscope;
 			return head;
 		}
 		if(itr->nodeSymbol.t==NONTERMINAL){
 			head = genAST(proot->left,parent);
 			head->parent=parent;
+			head->startscope=parent->startscope;
+			head->endscope=parent->endscope;
 		}
 		int cnt=1;
 		itr=itr->left->sibling;
 		ASTNode *ast_it=head;
 		while(itr->left->nodeSymbol.ele.term!=EPSILON){
+			ast_it->startscope=parent->startscope;
+			ast_it->endscope=parent->endscope;
 			ast_it->sibling = genAST(itr->left,parent);
 			cnt++;
 			ast_it=ast_it->sibling;
@@ -181,6 +199,8 @@ ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent){
 	temp->gnode.non_term=node->nodeSymbol.ele.non_term;
 	ParseTreeNode *child=node->left;
 	temp->sign=1;
+	temp->startscope=parent->startscope;
+	temp->endscope=parent->endscope;
 	if(child->nodeSymbol.t==TERMINAL&&
 		(child->nodeSymbol.ele.term==MINUS||child->nodeSymbol.ele.term==PLUS)){
 		temp= resolve_var(child->sibling,parent);
@@ -226,10 +246,14 @@ ASTNode* resolve_assgn_stmt(ParseTreeNode *node,ASTNode *parent){
 	head->t=node->nodeSymbol.t;
 	head->gnode.non_term=node->nodeSymbol.ele.non_term;
 	ParseTreeNode *whichstmt=node->left->sibling;
+	head->startscope=parent->startscope;
+	head->endscope=parent->endscope;
 	ASTNode *var=create_ast_node();
 	var->parent=head;
 	var->t=NONTERMINAL;
 	var->gnode.non_term=VAR;
+	var->startscope=parent->startscope;
+	var->endscope=parent->endscope;
 	if(whichstmt->left->nodeSymbol.ele.non_term==LVALUEIDSTMT){
 		var->vartype=1;
 		var->tokenptr=node->left->tokenptr;
@@ -243,6 +267,8 @@ ASTNode* resolve_assgn_stmt(ParseTreeNode *node,ASTNode *parent){
 		var->child->gnode.term=node->left->nodeSymbol.ele.term;
 		var->child->t=node->left->nodeSymbol.t;
 		var->child->tokenptr=node->left->tokenptr;
+		var->child->startscope=var->startscope;
+		var->child->endscope=var->endscope;
 		ParseTreeNode *lvaluearrchild = whichstmt->left->left;
 		ASTNode *sib=create_ast_node();
 		sib->parent=var;
@@ -261,14 +287,20 @@ ASTNode* resolve_module_stmt(ParseTreeNode *node,ASTNode *parent){
 	head->parent=parent;
 	head->t=node->nodeSymbol.t;
 	head->gnode.non_term=node->nodeSymbol.ele.non_term;
+	head->startscope=parent->startscope;
+	head->endscope=parent->endscope;
 	ASTNode *idlst=create_ast_node();
 	idlst->parent=head;
 	idlst->t=NONTERMINAL;
 	idlst->gnode.non_term=IDLIST;
+	idlst->startscope=parent->startscope;
+	idlst->endscope=parent->endscope;
 	ASTNode *paramlst=create_ast_node();
 	paramlst->parent=head;
 	paramlst->t=NONTERMINAL;
 	paramlst->gnode.non_term=IDLIST;
+	paramlst->startscope=parent->startscope;
+	paramlst->endscope=parent->endscope;
 	// CHECK FOR OPTIONAL
 	head->child=idlst;
 	ParseTreeNode *it=node->left;
@@ -290,6 +322,8 @@ ASTNode* resolve_module_stmt(ParseTreeNode *node,ASTNode *parent){
 ASTNode* resolve_exp_recursive(ParseTreeNode *node,ASTNode *parent){
 	ASTNode *head = create_ast_node();
 	head->parent=parent;
+	head->startscope=parent->startscope;
+	head->endscope=parent->endscope;
 	ParseTreeNode *pparent=node->parent;
 	if(node->nodeSymbol.ele.non_term==pparent->nodeSymbol.ele.non_term){
 		ParseTreeNode *op=pparent->left->left;
@@ -374,15 +408,29 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEDEF){
-		root->child = genAST(proot->left->sibling,root);
+		root->startscope = proot->left->tokenptr->line_no;
+		root->endscope= proot->left->sibling->sibling->tokenptr->line_no;
+		ASTNode *temp=genAST(proot->left->sibling,root);
+		root->child = temp->child;
+		ASTNode *it=root->child;
+		while(it!=NULL){
+			it->parent=root;
+			it->startscope=root->startscope;
+			it->endscope=root->endscope;
+			it=it->sibling;
+		}
 		root->scope= 1; // ADD SCOPE;
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENTS){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		root->child = compressList(proot,root);
 		root->scope=1; //ADD SCOPE
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==STATEMENT){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ASTNode *temp = genAST(proot->left,root);
 		root->child=temp->child;
 		root->stmttype = temp->stmttype;
@@ -395,6 +443,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==IOSTMT){
 		root->stmttype=IOSTMT;
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		root->child= create_ast_node();
 		root->child->parent=root;
 		root->child->t=TERMINAL;
@@ -406,6 +456,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			temp->parent=root;
 			temp->gnode.term=proot->left->sibling->sibling->nodeSymbol.ele.term;
 			temp->tokenptr=proot->left->sibling->sibling->tokenptr;
+			temp->startscope=root->startscope;
+			temp->endscope=root->endscope;
 			root->child->sibling=temp;
 		}
 		else{
@@ -415,10 +467,14 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==SIMPLESTMT){
 		root->stmttype=SIMPLESTMT;
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		root->child = genAST(proot->left,root);
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ASSIGNMENTSTMT){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ASTNode *temp = resolve_assgn_stmt(proot,root);
 		root->child=temp->child;
 		ASTNode *it=root->child;
@@ -429,6 +485,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==MODULEREUSESTMT){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ASTNode *temp= resolve_module_stmt(proot,root);
 		root->child = temp->child;
 		ASTNode *it= root->child;
@@ -440,6 +498,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DECLARESTMT){
 		root->stmttype=DECLARESTMT;
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ParseTreeNode *idlist=proot->left->sibling;
 		root->child = compressList(idlist,root);
 		return root;
@@ -448,9 +508,17 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->stmttype=CONDITIONALSTMT;
 		ParseTreeNode *id=proot->left->sibling->sibling;
 		ParseTreeNode *casestmt=id->sibling->sibling->sibling;
-		root->tokenptr=id->tokenptr;
-		root->child = genAST(casestmt,root);
-		root->child->sibling = genAST(casestmt->sibling,root);
+		root->child = create_ast_node();
+		root->child->parent=root;
+		root->child->t=id->nodeSymbol.t;
+		root->child->gnode.term=id->nodeSymbol.ele.term;
+		root->child->tokenptr=id->tokenptr;
+		root->child->sibling = genAST(casestmt,root);
+		root->child->startscope=parent->startscope;
+		root->child->endscope=parent->endscope;
+		root->startscope= id->sibling->sibling->tokenptr->line_no;
+		root->endscope= casestmt->sibling->sibling->tokenptr->line_no;
+		root->child->sibling->sibling = genAST(casestmt->sibling,root);
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ITERATIVESTMT){
@@ -459,24 +527,37 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		if(child->nodeSymbol.ele.term==FOR){
 			root->looptype=FOR;
 			ParseTreeNode *range= child->sibling->sibling->sibling->sibling;
-			root->tokenptr = child->sibling->sibling->tokenptr;
-			root->lrange = range->left->tokenptr->lexeme.num;
-			root->rrange= range->left->sibling->sibling->tokenptr->lexeme.num;
-			root->child = genAST(range->sibling->sibling->sibling,root);
+			root->child=create_ast_node();
+			root->child->tokenptr = child->sibling->sibling->tokenptr;
+			root->child->lrange = range->left->tokenptr->lexeme.num;
+			root->child->rrange= range->left->sibling->sibling->tokenptr->lexeme.num;
+			root->child->startscope=parent->startscope;
+			root->child->endscope=parent->endscope;
+			root->startscope=range->sibling->sibling->tokenptr->line_no;
+			root->endscope=range->sibling->sibling->sibling->sibling->tokenptr->line_no;
+			root->child->sibling = genAST(range->sibling->sibling->sibling,root);
 		}
 		else{
 			root->looptype=WHILE;
 			ParseTreeNode *aexp=proot->left->sibling->sibling;
+			root->startscope=parent->startscope;
+			root->endscope=parent->endscope;
 			root->child = genAST(aexp,root);
+			root->startscope=aexp->sibling->sibling->tokenptr->line_no;
+			root->endscope=aexp->sibling->sibling->sibling->sibling->tokenptr->line_no;
 			root->child->sibling = genAST(aexp->sibling->sibling->sibling,root);
 		}
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==CASESTMTS){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		root->child = compressList(proot,root);
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==DEFAULTNT){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		if(proot->nodeSymbol.ele.non_term==EPSILON){
 			root->child=NULL;
 		}
@@ -486,6 +567,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		return root;
 	}
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==EXPRESSION){
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ASTNode *aoeb = genAST(proot->left,root);
 		root->child=aoeb;
 		ASTNode *it=root->child;
@@ -505,6 +588,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		while(tempPtr->left->nodeSymbol.ele.non_term!=EPSILON){
 			tempPtr=tempPtr->left->sibling->sibling;
 		}
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		ASTNode *tempast = resolve_exp_recursive(tempPtr,root);   
     // do herea
     return tempast;
@@ -530,6 +615,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->t=proot->nodeSymbol.t;
 		root->gnode.non_term=proot->nodeSymbol.ele.non_term;
 		root->parent=parent;
+		root->startscope=parent->startscope;
+		root->endscope=parent->endscope;
 		return root;
 	}
 }
@@ -548,11 +635,14 @@ void _printAST(ASTNode *ast_root){
 	else{
 		if(ast_root->tokenptr!=NULL){
 			if(ast_root->gnode.term==ID){
-				printf("Token at %d : %s and datatype is %d\n",ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
-					ast_root->dtype);
+				printf("Token at %d : %s and datatype is %d and ||scope|| is : %d--%d\n",
+					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
+					ast_root->dtype,ast_root->startscope,ast_root->endscope);
 			}
 			else{
-				printf("Token at %d : %s\n",ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden);
+				printf("Token at %d : %s and ||scope|| is : %d--%d\n",
+					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
+					ast_root->startscope,ast_root->endscope);
 			}
 		}
 		else{

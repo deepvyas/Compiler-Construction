@@ -24,6 +24,8 @@ struct ASTNode{
 	int arrtype;
 	//SymbolTable Ptr;
 	int scope;
+	int startscope;
+	int endscope;
 	tokenInfo *tokenptr;
 	//==
 	//For operators

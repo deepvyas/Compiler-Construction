@@ -29,7 +29,7 @@ int hashKey(char *key){
 	for(i=l-1;i>=0;i--){
 		res+=key[i]-'0';
 	}
-	return res%TABLE_SIZE;
+	return res%DTableSize;
 }
 
 HashNode* find(char *key,HashTreeNode *node){
@@ -55,4 +55,8 @@ void addKey(char *key,TokenType token,HashTreeNode *node){
 	tmp->next=(*table)[hash].head;
 	(*table)[hash].head=tmp;
 	// printf("%s\n", (*table)[hash].head->key);
+}
+
+int main(){
+	
 }
