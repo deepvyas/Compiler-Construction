@@ -8,6 +8,7 @@ ASTNode* create_ast_node(){
 	node->child=NULL;
 	node->parent=NULL;
 	node->sibling=NULL;
+	node->tokenptr=NULL;
 	return node;
 }
 
@@ -334,6 +335,8 @@ ASTNode* resolve_exp_recursive(ParseTreeNode *node,ASTNode *parent){
 		head->tokenptr=op->tokenptr;
 		head->rop= genAST(pparent->left->sibling,head);
 		head->lop= resolve_exp_recursive(pparent,head);
+		head->child=head->lop;
+		head->child->sibling=head->rop;
 		return head;
 	}
 	else{
@@ -505,7 +508,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->endscope=parent->endscope;
 		ASTNode *temp= resolve_module_stmt(proot,root);
 		root->t=temp->t;
-		root->gnode.non_term=temp.gnode.non_term;
+		root->gnode.non_term=temp->gnode.non_term;
 		root->tokenptr= proot->left->sibling->sibling->sibling->tokenptr;
 		root->child = temp->child;
 		ASTNode *it= root->child;
@@ -577,7 +580,14 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==CASESTMTS){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
-		root->child = compressList(proot,root);
+		ASTNode *temp= compressList(proot,root);
+		ASTNode *it;
+		root->child = temp->child;
+		it=root->child;
+		while(it!=NULL){
+			it->parent=root;
+			it=it->sibling;
+		}
 		return root;
 	}
 	/*Has child STATEMENTS which has child STATEMENT which has corresponding behaviour*/
@@ -588,7 +598,14 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			root->child=NULL;
 		}
 		else{
-			root->child = genAST(proot->left->sibling->sibling,root);
+			ASTNode *temp= genAST(proot->left->sibling->sibling,root);
+			ASTNode *it;
+			root->child = temp->child;
+			it=root->child;
+			while(it!=NULL){
+				it->parent=root;
+				it=it->sibling;
+			}
 		}
 		return root;
 	}
