@@ -3,4 +3,5 @@
 *.txt
 a.out
 *.h.gch
+*.gch
 
