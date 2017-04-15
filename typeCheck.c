@@ -2,93 +2,59 @@
 #include <stdlib.h>
 #include "ASTDef.h"
 
+#define _integertype 0
+#define _realtype 1
 #define _booltype 2
 #define _arrtype 3
-#define _integertype 0
 
 typedef int TYPE
 
 // TODE change evaluate functions
-int evaluateTypeArith(ASTNode* node, int numChilds){
+int evaluateOperator(ASTNode* node, char ch){
     // This function checks if all children have
+    // ASSUMES that children have already been sorted
     // same type for arith to work
     // if That is the case, then put node->dtype or arr type accordingly 
-    // as same as Ti
     // return 1 if done
     // else 0
-    TYPE Ti[numChilds], Arr[numChilds];
-    ASTNode *temp = node->child;
-    for (int i = 0; i < numChilds; i++){
-        Ti[i] = temp->dytpe;
-        if (Ti[i] == _arrtype)
-            Arr[i] = temp->arrtype;
+    TYPE t1 = node->lop->dytpe;
+    if (t1 == _arrtype) t1 = node->lop->arrtype;
+    TYPE t2 = node->rop->dytpe;
+    if (t2 == _arrtype) t2 = node->rop->arrtype;
+    if (t1 == t2){
+        if (t1 == _integertype){
+            if (ch == 'a')
+                node->dtype = _integertype;
+            else if (ch == 'r')
+                node->dtype = _booltype;
+            else return 0
+        }
+        else if (t1 == _realtype){
+            if (ch == 'a')
+                node->dtype = _realtype;
+            else if(ch == 'r')
+                node->dtype = _booltype;
+            else return 0;
+        }
+        else if (t1 == _booltype && ch == 'l'){
+            node->dtype = _booltype;
+        }
+        else return 0;
     }
-    TYPE t = Ti[0];
-    if (t == _arrtype) t = Arr[0];
-    for (int i = 1; i < numChilds; i++){
-        if (T[i] == _arrtype)
-            if (Arr[i] != t) // Array node not of type t
-                return 0;
-        if (T[i] != t) // Simple node not of type t
-            return 0;
-    }
-    node->dtype = t;
+    else return 0;
     return 1;
 }
 
-int evaluateTypeRel(ASTNode* node, TYPE Ti[], TYPE Arr[], int numChilds){
-    // This function checks if all children have
-    // same type for relational to work
-    // if That is the case, then put node->dtype or arr type accordingly 
-    // as boolean
-    // return 1 if done
-    // else 0
-    TYPE Ti[numChilds], Arr[numChilds];
-    ASTNode *temp = node->child;
-    for (int i = 0; i < numChilds; i++){
-        Ti[i] = temp->dytpe;
-        if (Ti[i] == _arrtype)
-            Arr[i] = temp->arrtype;
-    }
-    TYPE t = Ti[0];
-    if (t == _arrtype) t = Arr[0];
-    for (int i = 1; i < numChilds; i++){
-        if (T[i] == _arrtype)
-            if (Arr[i] != t) // Array node not of type t
-                return 0;
-        if (T[i] != t) // Simple node not of type t
-            return 0;
-    }
-    node->dtype = _booltype; // For boolean
-    return 1;
+int insertInSymbolTable(ASTNode *node, environment){
+
 }
 
-int evaluateTypelog(ASTNode* node, TYPE Ti[], TYPE Arr[], int numChilds){
-    // This function checks if all children have
-    // same type for logical to work boolean
-    // if That is the case, then put node->dtype or arr type accordingly 
-    // as boolean
-    // return 1 if done
-    // else 0
-    TYPE Ti[numChilds], Arr[numChilds];
-    ASTNode *temp = node->child;
-    for (int i = 0; i < numChilds; i++){
-        Ti[i] = temp->dytpe;
-        if (Ti[i] == _arrtype)
-            Arr[i] = temp->arrtype;
-    }
-    TYPE t = Ti[0];
-    if (t != _booltype) return 0;
-    if (t == _arrtype) t = Arr[0];
-    for (int i = 1; i < numChilds; i++){
-        if (T[i] == _arrtype)
-            if (Arr[i] != t) // Array node not of type t
-                return 0;
-        if (T[i] != t) // Simple node not of type t
-            return 0;
-    }
-    node->dtype = _booltype; // For boolean
-    return 1;
+int checkInSymbolTable(ASTNode *node, environment){
+
+}
+
+int updateSymbolTable(ASTNode *node, environment){
+
 }
 
 int typechecking(ASTNode* node, environment){
@@ -248,17 +214,17 @@ int typechecking(ASTNode* node, environment){
     }
     if (node->gnode.term==PLUS || node->gnode.term==MINUS ||
             node->gnode.term == MUL || node->gnode.term == DIV){
-        check = evaluateTypeArith(node, numChilds);
+        check = evaluateOperator(node, 'a');
         if (check == 0) return 0;
     }
     else if (node->gnode.term==LT || node->gnode.term==LE ||
             node->gnode.term == GE || node->gnode.term == GT ||
             node->gnode.term == EQ || node->gnode.term == NE){
-        check = evaluateTypeRel(node, numChilds);
+        check = evaluateOperator(node, 'r');
         if (check == 0) return 0;
     }
     else if (node->gnode.term==AND || node->gnode.term==OR){
-        check = evaluateTypeArith(node, numChilds);
+        check = evaluateOperator(node, 'l');
         if (check == 0) return 0;
     }
 
