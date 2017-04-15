@@ -7,7 +7,7 @@
 #define _booltype 2
 #define _arrtype 3
 
-typedef int TYPE
+typedef int Type;
 
 // TODE change evaluate functions
 int evaluateOperator(ASTNode* node, char ch){
@@ -17,9 +17,9 @@ int evaluateOperator(ASTNode* node, char ch){
     // if That is the case, then put node->dtype or arr type accordingly 
     // return 1 if done
     // else 0
-    TYPE t1 = node->lop->dytpe;
+    Type t1 = node->lop->dtype;
     if (t1 == _arrtype) t1 = node->lop->arrtype;
-    TYPE t2 = node->rop->dytpe;
+    Type t2 = node->rop->dtype;
     if (t2 == _arrtype) t2 = node->rop->arrtype;
     if (t1 == t2){
         if (t1 == _integertype){
@@ -27,7 +27,7 @@ int evaluateOperator(ASTNode* node, char ch){
                 node->dtype = _integertype;
             else if (ch == 'r')
                 node->dtype = _booltype;
-            else return 0
+            else return 0;
         }
         else if (t1 == _realtype){
             if (ch == 'a')
@@ -141,7 +141,7 @@ int typechecking(ASTNode* node, environment){
     }
     else if (node->t == NONTERMINAL && 
             node->gnode.non_term == ASSIGNMENTSTMT){
-        TYPE t1, t2;
+        Type t1, t2;
         check = typechecking(node->child, environment);
         if (check == 0) return 0;
         t1 = node->child->dtype;
@@ -197,8 +197,8 @@ int typechecking(ASTNode* node, environment){
 
     // GEN CASE PLUS EXPRESSIONS
     // Declare array of types for each of the child
-    //TYPE Ti[numChilds];
-    //TYPE Arr[numChilds];
+    //Type Ti[numChilds];
+    //Type Arr[numChilds];
     tempPtr = node->child;
     // RECURSE DOWN
     for (int i = 0; i < numChilds; i++){
