@@ -563,7 +563,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->child->sibling->sibling = genAST(casestmt->sibling,root);
 		return root;
 	}
-	/**/
+	/* Two children if for then id and stmnts, if while then expressions and stmnts */
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==ITERATIVESTMT){
 		root->stmttype=ITERATIVESTMT;
 		ParseTreeNode *child=proot->left;

@@ -18,10 +18,10 @@ struct ASTNode{
 	valueAST value;
 	//==
 	//ID or Module name==
-	int dtype;
+	int dtype;  // 0 integer, 1 real, 2 bool, 3 array
 	int lrange;
 	int rrange;
-	int arrtype;
+	int arrtype; // 0 integer arr, 1 real arr, 2 bool arr
 	//SymbolTable Ptr;
 	int scope;
 	int startscope;
