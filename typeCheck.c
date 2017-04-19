@@ -12,7 +12,7 @@ typedef int Type;
 // TODE change evaluate functions
 int evaluateOperator(ASTNode* node, char ch){
     // This function checks if all children have
-    // ASSUMES that children have already been sorted
+    // ASSUMES that children have already been sorted and type checked
     // same type for arith to work
     // if That is the case, then put node->dtype or arr type accordingly 
     // return 1 if done
@@ -74,7 +74,7 @@ int typechecking(ASTNode* node, environment){
     // SPECIAL CASES
     if (numChilds == 0 || node->tokenPtr != NULL){ // CASES HERE
         if (node->t == NONTERMINAL && 
-                node->gnode.non_term == MODULEDECLARATIONS){
+                node->gnode.non_term == MODULEDECLARATION){
             check = insertInSymbolTable(node, environment);
             if (check == 0) // already inserted in same scope
                 return 0;
