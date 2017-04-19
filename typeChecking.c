@@ -9,7 +9,7 @@
 #define _arrtype 3
 
 int globalItr = 0;
-int globalIt2 = 0;
+int globalItr2 = 0;
 HashTreeNode *reuseInstancesHT[200];
 
 /*To Be Removed*/
@@ -412,10 +412,15 @@ int checkType(ASTNode *inpChild, ASTNode *inHT, HashTreeNode *htroot){
         return 0;
     }
     int type = inHT->dtype;
+    int type2 = entry->datatype;
+    if (type2 == _arrtype)
+        type2 = entry->ast_node->arrtype;
     if (type == _arrtype)
         type = inHT->arrtype;
-    if (type != entry->datatype)
+    if (type != type2){
+        printf("The types are %d and %d  ", type, type2);
         return 0;
+    }
     return 1;
 }
 
@@ -429,13 +434,13 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
         HashTableNode *entry;
         ASTNode *inpChild = root->child->sibling->child;
         entry = find2(root->tokenptr->lexeme.iden, globalHT, 1);
-        ASTNode *childArrIn = entry->input_plist;
-        ASTNode *childArrOut = entry->output_plist;
+        ASTNode **childArrIn = entry->input_plist;
+        ASTNode **childArrOut = entry->output_plist;
         
         int tempx = 0;
         while(inpChild!=NULL){
             if (childArrIn[tempx] == NULL){
-                printf("The numbers of parameters dont match for input parameters of module reuse!"\n);
+                printf("The numbers of parameters dont match for input parameters of module reuse!\n");
                 break;
             }
             check = checkType(inpChild, childArrIn[tempx], htroot);
@@ -446,12 +451,14 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
             tempx++;
             inpChild = inpChild->sibling;
         }
+        if(inpChild == NULL && childArrIn[tempx] != NULL)
+            printf("The numbers of parameters dont match for input parameters of module reuse!\n");
 
         tempx = 0;
         inpChild = root->child->child;
         while(inpChild!=NULL){
             if (childArrOut[tempx] == NULL){
-                printf("The numbers of parameters dont match for return parameters of module reuse!"\n);
+                printf("The numbers of parameters dont match for return parameters of module reuse!\n");
                 break;
             }
             check = checkType(inpChild, childArrOut[tempx], htroot);
@@ -462,12 +469,14 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
             tempx++;
             inpChild = inpChild->sibling;
         }
+        if(inpChild == NULL && childArrOut[tempx] != NULL)
+            printf("The numbers of parameters dont match for input parameters of module reuse!\n");
         dochild = 0;
     }
     if (dochild){
         ASTNode *child=root->child;
         while(child!=NULL){
-            check = parseASTAgain(child,htroot);
+            check = parseASTAgain(child,globalHT);
             child=child->sibling;
         }
     }
@@ -477,9 +486,9 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
 int main(int argc,char* argv[]){
 	ASTNode *astroot;
 	astroot= makeAST(argv[1]);
-	_printAST(astroot);
 	// testAST(astroot);
 	HashTreeNode *htroot= initTree();
 	parseAST(astroot,htroot);
+    parseASTAgain(astroot, htroot);
 	return 0;
 }
