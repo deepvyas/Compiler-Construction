@@ -153,6 +153,7 @@ void parseAST(ASTNode *root,HashTreeNode *htroot){
 int main(int argc,char* argv[]){
 	ASTNode *astroot;
 	astroot= makeAST(argv[1]);
+	_printAST(astroot);
 	// testAST(astroot);
 	HashTreeNode *htroot= initTree();
 	parseAST(astroot,htroot);
