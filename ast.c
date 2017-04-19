@@ -415,9 +415,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			root->child->sibling = create_ast_node();
 			root->child->sibling->gnode.non_term=it->nodeSymbol.ele.non_term;
 			root->child->sibling->t=it->nodeSymbol.t;
-			root->child->sibling->child= create_ast_node();
-			root->child->sibling->child->t= TERMINAL;
-			root->child->sibling->child->gnode.term= EPSILON;
+			root->child->sibling->child= NULL;
 		}
 		else{
 			root->child->sibling = genAST(it->left->sibling->sibling,root);
