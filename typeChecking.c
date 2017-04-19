@@ -8,6 +8,10 @@
 #define _booltype 2
 #define _arrtype 3
 
+int globalItr = 0;
+int globalIt2 = 0;
+HashTreeNode *reuseInstancesHT[200];
+
 /*To Be Removed*/
 void testAST(ASTNode *root){
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULEDECLARATION||
@@ -239,7 +243,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     // NEXT SPECIAL CASES
     // Module reuse statement to do in parse 2
     else if(root->t == NONTERMINAL && root->gnode.non_term == MODULEREUSESTMT){
-        
+        reuseInstancesHT[globalItr++] = htroot;
     }
 
     // Assignment statement
@@ -396,9 +400,78 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     }
     if (root->child != NULL && root->t == NONTERMINAL && root->gnode.non_term != VAR)
         root->dtype = root->child->dtype;
-    if (flag == 0)
+
+    return flag;
+}
+
+int checkType(ASTNode *inpChild, ASTNode *inHT, HashTreeNode *htroot){
+    HashTableNode *entry;
+    entry = find2(inpChild->tokenptr->lexeme.iden, htroot, 0);
+    if (entry == NULL){
+        printf("Id not present in the Symbol Table.\n");
         return 0;
-    else return 1;
+    }
+    int type = inHT->dtype;
+    if (type == _arrtype)
+        type = inHT->arrtype;
+    if (type != entry->datatype)
+        return 0;
+    return 1;
+}
+
+int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
+    // Use this fucntion for only module reuse
+    int dochild = 1;
+    int flag = 1;
+    int check;
+    if (root->t == NONTERMINAL && root->gnode.non_term == MODULEREUSESTMT){
+        HashTreeNode *htroot = reuseInstancesHT[globalItr2++];
+        HashTableNode *entry;
+        ASTNode *inpChild = root->child->sibling->child;
+        entry = find2(root->tokenptr->lexeme.iden, globalHT, 1);
+        ASTNode *childArrIn = entry->input_plist;
+        ASTNode *childArrOut = entry->output_plist;
+        
+        int tempx = 0;
+        while(inpChild!=NULL){
+            if (childArrIn[tempx] == NULL){
+                printf("The numbers of parameters dont match for input parameters of module reuse!"\n);
+                break;
+            }
+            check = checkType(inpChild, childArrIn[tempx], htroot);
+            if (check == 0) {
+                flag = 0;
+                printf("Type mismatch in module reuse input parameters!\n");
+            }
+            tempx++;
+            inpChild = inpChild->sibling;
+        }
+
+        tempx = 0;
+        inpChild = root->child->child;
+        while(inpChild!=NULL){
+            if (childArrOut[tempx] == NULL){
+                printf("The numbers of parameters dont match for return parameters of module reuse!"\n);
+                break;
+            }
+            check = checkType(inpChild, childArrOut[tempx], htroot);
+            if (check == 0) {
+                flag = 0;
+                printf("Type mismatch in module reuse return parameters!\n");
+            }
+            tempx++;
+            inpChild = inpChild->sibling;
+        }
+        dochild = 0;
+    }
+    if (dochild){
+        ASTNode *child=root->child;
+        while(child!=NULL){
+            check = parseASTAgain(child,htroot);
+            child=child->sibling;
+        }
+    }
+    return flag;
 }
 
 int main(int argc,char* argv[]){
