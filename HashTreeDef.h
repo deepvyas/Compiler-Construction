@@ -13,6 +13,11 @@ struct HashTableNode{
 	int startscope;
 	int endscope;
 	int offset;
+	/*These parameters are for use in modules.*/
+	ASTNode* input_plist[NOC];
+	ASTNode* output_plist[NOC];
+	int defined;
+	/*End*/
 	struct HashTableNode *next;
 };
 
@@ -39,4 +44,5 @@ HashTreeNode* addchild2(HashTreeNode *node);
 int hashKey2(char *key);
 HashTableNode* find2(char *key,HashTreeNode *node,int res);
 int addKey2(ASTNode *ast_node,HashTreeNode *node);
+void add_plist(HashTableNode *ele,ASTNode *node);
 #endif

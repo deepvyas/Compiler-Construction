@@ -119,3 +119,21 @@ int addKey2(ASTNode *ast_node,HashTreeNode *node){
 	return 0;
 	// printf("%s\n", table[hash].head->key);
 }
+void add_plist(HashTableNode *ele,ASTNode *node){
+	if(node->gnode.non_term!=MODULENT)
+	{
+		printf("Error in adding i/o lists.\n");
+	}
+	int i=0;
+	ASTNode *iplist=node->child;
+	ASTNode *oplist=node->child->sibling;
+	while(iplist!=NULL){
+		ele->input_plist[i++]=iplist;
+		iplist=iplist->sibling;
+	}
+	i=0;
+	while(oplist!=NULL){
+		ele->output_plist[i++]=oplist;
+		oplist=oplist->sibling;
+	}
+}
