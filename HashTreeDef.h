@@ -1,28 +1,42 @@
-#ifndef _ASTDEF_
-#define _ASTDEF_
-#include "Stage1/lexerDef.h"
+#ifndef _HASHTREEDEF_
+#define _HASHTREEDEF_
 #include "./Stage1/parserDef.h"
 #include "./Stage1/lexerDef.h"
+#include "ASTDef.h"
 #define NOC 20
-struct HashNode{
+struct HashTableNode{
 	char key[LEXEME_SIZE];
-	TokenType token;
+	char function_name[LEXEME_SIZE];
+	tokenInfo* tokenptr;
+	ASTNode *ast_node;
 	int datatype;
-	struct HashNode *next;
+	int startscope;
+	int endscope;
+	int offset;
+	struct HashTableNode *next;
 };
 
-typedef struct HashNode HashNode;
+typedef struct HashTableNode HashTableNode;
 
 typedef struct{
-	HashNode *head;
-}HashCell;
+	HashTableNode *head;
+}HashElement;
 
 struct HashTreeNode{
-	HashCell *table;
+	char table_name[LEXEME_SIZE];
+	char function_name[LEXEME_SIZE];
+	HashElement *table;
 	struct HashTreeNode* childQ[NOC];
 	int tail;
+	int curr_offset;
 	struct HashTreeNode *parent;
 };
 
 typedef struct HashTreeNode HashTreeNode;
+
+HashTreeNode* initTree();
+HashTreeNode* addchild2(HashTreeNode *node);
+int hashKey2(char *key);
+HashTableNode* find2(char *key,HashTreeNode *node,int res);
+int addKey2(ASTNode *ast_node,HashTreeNode *node);
 #endif

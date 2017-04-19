@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "./Stage1/parserDef.h"
 #include "./Stage1/lexerDef.h"
-#include "Stage1/hashTable.h"
+#include "./Stage1/hashTable.h"
 typedef union{
 	int num;
 	float r_num;
@@ -22,7 +22,7 @@ struct ASTNode{
 	int lrange;
 	int rrange;
 	int arrtype; // 0 integer arr, 1 real arr, 2 bool arr
-	//SymbolTable Ptr;
+	//SymbolTable Ptr
 	int scope;
 	int startscope;
 	int endscope;
@@ -49,4 +49,15 @@ typedef struct ASTNode ASTNode;
 /*Function prototypes*/
 ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent);
 ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent);
+ASTNode* create_ast_node();
+int extract_type(ParseTreeNode *node);
+ASTNode* make_id_node(ParseTreeNode *idnode,ParseTreeNode *dnode);
+ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent);
+ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent);
+ASTNode* resolve_assgn_stmt(ParseTreeNode *node,ASTNode *parent);
+ASTNode* resolve_module_stmt(ParseTreeNode *node,ASTNode *parent);
+ASTNode* resolve_exp_recursive(ParseTreeNode *node,ASTNode *parent);
+ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent);
+void _printAST(ASTNode *ast_root);
+ASTNode* makeAST(char *filename);
 #endif

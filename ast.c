@@ -124,7 +124,7 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		head->startscope=parent->startscope;
 		head->endscope=parent->endscope;
 		if(itr->left->sibling->left->nodeSymbol.ele.term==INTEGER){
-			head->value.num= itr->left->sibling->tokenptr->lexeme.num;
+			head->value.num= itr->left->sibling->left->tokenptr->lexeme.num;
 		}
 		else if(itr->left->sibling->left->nodeSymbol.ele.term==TRUE){
 			head->value.tval=1;
@@ -147,7 +147,7 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 			temp->endscope=parent->endscope;
 			temp->tokenptr=n1->left->sibling->left->tokenptr;
 			if(n1->left->sibling->left->nodeSymbol.ele.term==INTEGER){
-				temp->value.num= n1->left->sibling->tokenptr->lexeme.num;
+				temp->value.num= n1->left->sibling->left->tokenptr->lexeme.num;
 			}
 			else if(n1->left->sibling->left->nodeSymbol.ele.term==TRUE){
 				temp->value.tval=1;
@@ -463,6 +463,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		ASTNode *temp = genAST(proot->left,root);
 		root->child=temp->child;
 		root->stmttype = temp->stmttype;
+		root->looptype=temp->looptype;
 		ASTNode *it=root->child;
 		while(it!=NULL){
 			it->parent=root;
@@ -571,6 +572,8 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			root->looptype=FOR;
 			ParseTreeNode *range= child->sibling->sibling->sibling->sibling;
 			root->child=create_ast_node();
+			root->child->t=TERMINAL;
+			root->child->gnode.term=ID;
 			root->child->tokenptr = child->sibling->sibling->tokenptr;
 			root->child->lrange = range->left->tokenptr->lexeme.num;
 			root->child->rrange= range->left->sibling->sibling->tokenptr->lexeme.num;
@@ -723,14 +726,14 @@ void _printAST(ASTNode *ast_root){
 	}
 }
 
-int main(int argc,char* argv[]){
+ASTNode* makeAST(char *filename){
 	initTable();
 	populateGrammar();
 	compute_first();
 	compute_follow();
 	createParsingTable();
-	ParseTreeNode *proot=parseInputSourceCode(argv[1],0);
+	ParseTreeNode *proot=parseInputSourceCode(filename,0);
 	ASTNode *ast_root=genAST(proot,NULL);
-	_printAST(ast_root);
-	return 0;
+	// _printAST(ast_root);
+	return ast_root;
 }
