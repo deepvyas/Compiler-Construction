@@ -312,8 +312,61 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     }
     else if (root->t == NONTERMINAL && root->gnode.non_term == STATEMENT &&
             root->stmttype == CONDITIONALSTMT){
+		HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
+        if (entry == NULL){
+            printf("ID in CONDITIONAL not found in table :%s\n",htroot->table_name);
+            flag = 0;
+        }
+        int intorbool = 0; // 0 is int, 2 is bool
+        printf("entry ka datatype! %d %s\n", entry->datatype, entry->key);
+        if (entry->datatype == _integertype){
+            intorbool = 0;
+            if(root->child->sibling->sibling->child == NULL){
+                printf("No default statement but id is integer!\n");
+                flag = 0;
+            }
+        }
+        else if (entry->datatype == _booltype){
+            intorbool = 2;
+            if(root->child->sibling->sibling->child != NULL){
+                printf("Default statement exists but id is boolean!\n");
+                flag = 0;
+            }
+        }
+        ASTNode *casestmts = root->child->sibling->child;
 
-        //dochild = 0;
+        int caseval[20];
+        int j = 0, i;
+        while(casestmts != NULL){
+            if (casestmts->dtype != intorbool){
+                printf("Case statement is not of type that matches with ID!\n");
+                flag = 0;
+            }
+            if (casestmts->dtype == _integertype)
+                caseval[j++] = casestmts->value.num;
+            else
+                caseval[j++] = casestmts->value.tval;
+            // check if arr already has this shit
+            i = 0;
+            for(i= 0 ; i < j-1; i++){
+                if (caseval[i] == caseval[j-1]){
+                    printf("Case value already exits\n");
+                }
+            }
+            check = parseAST(casestmts->child, htroot);
+            if (check == 0) flag = 0;
+            casestmts = casestmts->sibling;
+        }
+        // for default
+        casestmts = root->child->sibling->sibling->child;
+        while(casestmts != NULL){
+            check = parseAST(casestmts, htroot);
+            if (check == 0) flag = 0;
+            casestmts = casestmts->sibling;
+        }
+
+        
+        dochild = 0;
     }
     
 	/*Call to next nodes*/
