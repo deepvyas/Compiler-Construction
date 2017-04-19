@@ -125,15 +125,22 @@ void add_plist(HashTableNode *ele,ASTNode *node){
 		printf("Error in adding i/o lists.\n");
 	}
 	int i=0;
-	ASTNode *iplist=node->child;
-	ASTNode *oplist=node->child->sibling;
+	ASTNode *iplist=node->child->child;
+	ASTNode *oplist=node->child->sibling->child;
 	while(iplist!=NULL){
 		ele->input_plist[i++]=iplist;
 		iplist=iplist->sibling;
+	}
+	int j;
+	for(j=i;j<NOC;j++){
+		ele->input_plist[j]=NULL;
 	}
 	i=0;
 	while(oplist!=NULL){
 		ele->output_plist[i++]=oplist;
 		oplist=oplist->sibling;
+	}
+	for(j=i;j<NOC;j++){
+		ele->output_plist[j]=NULL;
 	}
 }

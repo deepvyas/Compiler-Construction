@@ -477,6 +477,7 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
 int main(int argc,char* argv[]){
 	ASTNode *astroot;
 	astroot= makeAST(argv[1]);
+	_printAST(astroot);
 	// testAST(astroot);
 	HashTreeNode *htroot= initTree();
 	parseAST(astroot,htroot);
