@@ -71,6 +71,15 @@ void parseAST(ASTNode *root,HashTreeNode *htroot){
 			}
 		}
 	}
+	/*Add function declarations to symbol table*/
+	if(root->t==NONTERMINAL&&root->gnode.non_term==MODULEDECLARATION){
+		if(strcmp(htroot->table_name,"GLOBAL")!=0){
+			printf("ERROR in module name insertion.\n");
+		}
+		int st = addKey2(root,htroot);
+		if(st==-1) printf("Module redeclared.\n");
+	}
+	/*If not declaration check in symbol table for presence*/
 	else if(root->t==NONTERMINAL&&root->gnode.non_term==VAR){
 		if(root->vartype==1){
 			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
@@ -99,8 +108,27 @@ void parseAST(ASTNode *root,HashTreeNode *htroot){
 		root->gnode.non_term==DRIVERMODULE)){
 		char function_name[LEXEME_SIZE];
 		strcpy(function_name,htroot->function_name);
+		HashTreeNode *global=htroot;
 		htroot= addchild2(htroot);
 		if(root->gnode.non_term==MODULENT||root->gnode.non_term==DRIVERMODULE){
+			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,global,1);
+			if(entry!=NULL){
+				if(entry->defined==0){
+					entry->defined=1;
+					printf("declared module : %s\n",entry->key);
+				}
+				else{
+					printf("Module redefined.\n");
+				}
+			}
+			else{
+				int st= addKey2(root,global);
+				entry= find2(root->tokenptr->lexeme.iden,global,1);
+			}
+			if(root->gnode.non_term==MODULENT){
+				printf("Adding i/o lists.\n");
+				add_plist(entry,root);
+			}
 			strcpy(htroot->table_name,root->tokenptr->lexeme.iden);
 			strcpy(htroot->function_name,root->tokenptr->lexeme.iden);
 		}
