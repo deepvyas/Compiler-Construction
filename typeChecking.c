@@ -3,6 +3,11 @@
 #include "ASTDef.h"
 #include "HashTreeDef.h"
 
+#define _integertype 0
+#define _realtype 1
+#define _booltype 2
+#define _arrtype 3
+
 /*To Be Removed*/
 void testAST(ASTNode *root){
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULEDECLARATION||
@@ -42,7 +47,53 @@ void testAST(ASTNode *root){
 	}
 }
 
-void parseAST(ASTNode *root,HashTreeNode *htroot){
+int evaluateOperator(ASTNode* node, char ch){
+    // This function checks if all children have
+    // ASSUMES that children have already been sorted and type checked
+    // same type for arith to work
+    // if That is the case, then put node->dtype or arr type accordingly 
+    // return 1 if done
+    // else 0
+    int t1 = node->child->dtype;
+    if (t1 == _arrtype) t1 = node->child->arrtype;
+    int t2 = node->child->sibling->dtype;
+    if (t2 == _arrtype) t2 = node->child->sibling->arrtype;
+    if (t1 == t2){
+        if (t1 == _integertype){
+            if (ch == 'a')
+                node->dtype = _integertype;
+            else if (ch == 'r')
+                node->dtype = _booltype;
+            else {
+                printf("Types in expr match, both int but expr is logical\n");
+                return 0;
+            }
+        }
+        else if (t1 == _realtype){
+            if (ch == 'a')
+                node->dtype = _realtype;
+            else if(ch == 'r')
+                node->dtype = _booltype;
+            else {
+                printf("Types in expr match, both real but expr is logical\n");
+                return 0;
+            }
+        }
+        else if (t1 == _booltype && ch == 'l'){
+            node->dtype = _booltype;
+        }
+    }
+    else {
+        printf("Type mismatch in expression %d and %d!\n", t1, t2);
+        return 0;
+    }
+    return 1;
+}
+
+
+int parseAST(ASTNode *root,HashTreeNode *htroot){
+    // parseAST return 0 if parsing unsuccessful at the current node
+    //    it returns 1 if curr node parsed successfully
 	/* LIST: 1. ID, VAR,MODULEDECLARATIONS
 	/*			 2. CASESTMTS : type check var
 	/*			 3. MODULE STMTS : CHECK INPUTLIST AND OUTPUTLIST
@@ -50,58 +101,14 @@ void parseAST(ASTNode *root,HashTreeNode *htroot){
 	/*       5. ARRAY : CHECK BOUNDS
 	*/
 	/*Add key to Symbol Table*/
-	if(root->t==TERMINAL&&root->gnode.term==ID&&root->parent->gnode.non_term!=VAR){
-		if(root->parent->stmttype==DECLARESTMT||
-			root->parent->gnode.non_term==INPUTPLIST||
-			root->parent->gnode.non_term==OUTPUTPLIST){
-				printf("ID : %s with type : %d",root->tokenptr->lexeme.iden,root->dtype);
-			if(htroot->parent!=NULL)
-				printf("(child ht :%s) --> (%s)\n",htroot->table_name,htroot->parent->table_name);
-			int st = addKey2(root,htroot);
-			if(st==-1){
-				printf("Previosly Declared ID redeclared.\n");
-			}
-		}
-		else{
-			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
-			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
-			if(entry==NULL) printf("ID not found in table :%s\n",htroot->table_name);
-			else{
-				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
-			}
-		}
-	}
-	/*Add function declarations to symbol table*/
-	if(root->t==NONTERMINAL&&root->gnode.non_term==MODULEDECLARATION){
-		if(strcmp(htroot->table_name,"GLOBAL")!=0){
-			printf("ERROR in module name insertion.\n");
-		}
-		int st = addKey2(root,htroot);
-		if(st==-1) printf("Module redeclared.\n");
-	}
-	/*If not declaration check in symbol table for presence*/
-	else if(root->t==NONTERMINAL&&root->gnode.non_term==VAR){
-		if(root->vartype==1){
-			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
-			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
-			if(entry==NULL) printf("ID not found in table :%s\n",htroot->table_name);
-			else{
-				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
-			}
-		}
-		else if(root->vartype==2){
-			if(root->child->sibling!=NULL)
-				printf("ID in source code: %s --> ",root->child->tokenptr->lexeme.iden);
-			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
-			if(entry==NULL) printf("ID not found in table :%s\n",htroot->table_name);
-			else{
-				printf("(dt:%d,ss:%d,es:%d,lr:%d,rr:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,
-					entry->ast_node->lrange,entry->ast_node->rrange,entry->offset);
-			}
-		}
-	}
 
-	/*New Scope Generation*/
+    int check; // for parseStatus
+    int chec2;
+    int flag = 1;
+    int dochild = 1;
+    //printf("Root nonterm  %d and statement type %d\n", root->gnode.non_term, root->stmttype);
+	
+    /*New Scope Generation*/
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULENT||
 		root->stmttype==CONDITIONALSTMT||
 		root->stmttype==ITERATIVESTMT||
@@ -142,12 +149,203 @@ void parseAST(ASTNode *root,HashTreeNode *htroot){
 		}
 	}
 
-	/*Call to next nodes*/
-	ASTNode *child=root->child;
-	while(child!=NULL){
-		parseAST(child,htroot);
-		child=child->sibling;
+	if(root->t==TERMINAL&&root->gnode.term==ID&&root->parent->gnode.non_term!=VAR){
+		if(root->parent->stmttype==DECLARESTMT||
+			root->parent->gnode.non_term==INPUTPLIST||
+			root->parent->gnode.non_term==OUTPUTPLIST){
+//				printf("ID : %s with type : %d",root->tokenptr->lexeme.iden,root->dtype);
+//			if(htroot->parent!=NULL)
+//				printf("(child ht :%s) --> (%s)\n",htroot->table_name,htroot->parent->table_name);
+			int st = addKey2(root,htroot);
+			if(st==-1){
+				printf("Previosly Declared ID redeclared.\n");
+			}
+		}
+		else{
+//			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
+			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
+			if(entry==NULL) {
+                printf("ID not found in table :%s\n",htroot->table_name);
+                flag = 0;
+            }
+			else{
+//				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
+			}
+		}
+/////////        flag = 1;
 	}
+	/*Add function declarations to symbol table*/
+	if(root->t==NONTERMINAL&&root->gnode.non_term==MODULEDECLARATION){
+		if(strcmp(htroot->table_name,"GLOBAL")!=0){
+			printf("ERROR in module name insertion.\n");
+            flag = 0;
+		}
+		int st = addKey2(root,htroot);
+		if(st==-1) {
+            printf("Module redeclared.\n");
+            flag = 0;
+        }
+    //////////    flag = 1;
+	}
+	/*If not declaration check in symbol table for presence*/
+	else if(root->t==NONTERMINAL&&root->gnode.non_term==VAR){
+        int type;
+		if(root->vartype==1){
+//			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
+			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
+			if(entry==NULL) {
+                printf("ID not found in table :%s\n",htroot->table_name);
+                flag = 0;
+            }
+			else{
+                type = entry->datatype;
+//				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
+			}
+		}
+		else if(root->vartype==2){
+//          if(root->child->sibling!=NULL)
+//				printf("ID in source code: %s --> ",root->child->tokenptr->lexeme.iden);
+			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
+			if(entry==NULL) {
+                printf("ID not found in table :%s\n",htroot->table_name);
+                flag = 0;
+            }
+			else{
+                //printf("array shit seen bitch %d %s!\n", entry->ast_node->arrtype, entry->key);
+                type = entry->ast_node->arrtype;
+                HashTableNode *entry2 = find2(root->child->sibling->tokenptr->lexeme.iden,
+                        htroot, 0);
+                if (entry2 == NULL){
+                    printf("Index of array not found in the table: %s\n", htroot->table_name);
+                    flag = 0;
+                }
+                else if(entry2->datatype != _integertype){
+                    printf("Index of array is not of type integer!\n");
+                    flag = 0;
+                }
+//				printf("(dt:%d,ss:%d,es:%d,lr:%d,rr:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,
+//					entry->ast_node->lrange,entry->ast_node->rrange,entry->offset);
+			}
+		}
+        else if (root->vartype == 0){
+            type = root->dtype;
+        }
+        root->dtype = type;
+        //printf("INSIDE VAR type : %d\n", type);
+        dochild = 0;
+////////        return 1;
+	}
+
+    // NEXT SPECIAL CASES
+    // Module reuse statement to do in parse 2
+    else if(root->t == NONTERMINAL && root->gnode.non_term == MODULEREUSESTMT){
+        
+    }
+
+    // Assignment statement
+    // its like statement (simple) --child--> assignment stmt
+    // and simple has child modulereuse
+    // so only check non_term
+    // and not stmnttype
+    else if(root->t == NONTERMINAL && root->gnode.non_term == ASSIGNMENTSTMT){
+        int t1, t2;
+        check = parseAST(root->child, htroot);
+        chec2 = parseAST(root->child->sibling, htroot);
+        t1 = root->child->dtype;
+        if (t1 == _arrtype)
+            t1 = root->child->arrtype;
+        t2 = root->child->sibling->dtype;
+        if (t2 == _arrtype)
+            t2 = root->child->arrtype;
+        if (chec2 == 0 || check == 0) flag = 0;
+        if (t1 != t2 && flag != 0){
+            printf("Type mismatch in assignment statement!\n");
+            flag = 0;
+        }
+        printf("In assignment statement types are %d and %d\n", t1, t2);
+        dochild = 0;
+    }
+    // Iterative statement 
+    else if(root->t == NONTERMINAL && root->gnode.non_term == STATEMENT && 
+            root->stmttype == ITERATIVESTMT){
+        if (root->looptype == FOR){
+            // ALSO ADD READONLY FLAG
+			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
+			if(entry==NULL) {
+                printf("Index in for loop not found in table :%s\n",htroot->table_name);
+                flag =0;
+            }
+            if (entry->datatype != _integertype) {
+                printf("Index in for loop is not of type integer!\n");
+                flag =0;
+            }
+            check = parseAST(root->child->sibling, htroot);
+            if (check == 0) flag = 0;
+        }
+        else { // while loop
+            check = parseAST(root->child, htroot);
+            chec2 = parseAST(root->child->sibling, htroot);
+            if (root->child->dtype != _booltype){
+                printf("While loop condition not of type boolean!\n");
+                flag = 0;
+            }
+            if (chec2 == 0 || check == 0)
+                flag = 0;
+        }
+        dochild = 0;
+    }
+    // IO STMNT
+    else if (root->t == NONTERMINAL && root->gnode.non_term == STATEMENT &&
+            root->stmttype == IOSTMT){
+        if (root->child->gnode.term == GET_VALUE){
+			HashTableNode *entry=find2(root->child->sibling->tokenptr->lexeme.iden,htroot,0);
+			if(entry==NULL) {
+                printf("ID in IOSTMNT not found in table :%s\n",htroot->table_name);
+                flag = 0;
+            }
+        }
+        else {
+            check = parseAST(root->child->sibling, htroot);
+            if (check == 0) flag = 0;
+        }
+        dochild = 0;
+    }
+    else if (root->t == NONTERMINAL && root->gnode.non_term == STATEMENT &&
+            root->stmttype == CONDITIONALSTMT){
+
+        //dochild = 0;
+    }
+    
+	/*Call to next nodes*/
+    if (dochild == 1){
+        ASTNode *child=root->child;
+        while(child!=NULL){
+            check = parseAST(child,htroot);
+            child=child->sibling;
+        }
+    }
+
+    // Now the children have been processed. Next for expressions!!
+    if (root->t == TERMINAL && (root->gnode.term == PLUS || root->gnode.term == MINUS ||
+            root->gnode.term == MUL || root->gnode.term == DIV)){
+        check = evaluateOperator(root, 'a');
+        if (check == 0) flag = 0;
+    }
+    else if (root->t == TERMINAL && (root->gnode.term == LT || root->gnode.term == LE ||
+            root->gnode.term == GE || root->gnode.term == GT &&
+            root->gnode.term == EQ || root->gnode.term == NE)){
+        check = evaluateOperator(root, 'r');
+        if (check == 0) flag = 0;
+    }
+    else if (root->t == TERMINAL && (root->gnode.term == AND || root->gnode.term == OR)){
+        check = evaluateOperator(root, 'l');
+        if (check == 0) flag = 0;
+    }
+    if (root->child != NULL && root->t == NONTERMINAL && root->gnode.non_term != VAR)
+        root->dtype = root->child->dtype;
+    if (flag == 0)
+        return 0;
+    else return 1;
 }
 
 int main(int argc,char* argv[]){

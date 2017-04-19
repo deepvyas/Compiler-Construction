@@ -217,10 +217,14 @@ ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent){
 		if(child->nodeSymbol.t==TERMINAL&&(child->nodeSymbol.ele.term==INTEGER||child->nodeSymbol.ele.term==REAL)){
 			temp->tokenptr=child->tokenptr;
 			temp->vartype=0;
-			if(child->nodeSymbol.ele.term==INTEGER)
+			if(child->nodeSymbol.ele.term==INTEGER){
 				temp->value.num= child->tokenptr->lexeme.num;
-			else
+                temp->dtype=0;
+            }
+			else{
+                temp->dtype=1;
 				temp->value.r_num= child->tokenptr->lexeme.r_num;
+            }
 		}
 		else{
 			ParseTreeNode *which = child->sibling->left;
