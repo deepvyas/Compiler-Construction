@@ -125,12 +125,15 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		head->endscope=parent->endscope;
 		if(itr->left->sibling->left->nodeSymbol.ele.term==INTEGER){
 			head->value.num= itr->left->sibling->left->tokenptr->lexeme.num;
+            head->dtype = 0;
 		}
 		else if(itr->left->sibling->left->nodeSymbol.ele.term==TRUE){
 			head->value.tval=1;
+            head->dtype = 2;
 		}
 		else{
 			head->value.tval=0;
+            head->dtype = 2;
 		}
 		ParseTreeNode *stmts=itr->left->sibling->sibling->sibling;
 		head->child=genAST(stmts,head);
@@ -148,12 +151,15 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 			temp->tokenptr=n1->left->sibling->left->tokenptr;
 			if(n1->left->sibling->left->nodeSymbol.ele.term==INTEGER){
 				temp->value.num= n1->left->sibling->left->tokenptr->lexeme.num;
+                head->dtype = 0;
 			}
 			else if(n1->left->sibling->left->nodeSymbol.ele.term==TRUE){
 				temp->value.tval=1;
+                head->dtype = 2;
 			}
 			else{
 				temp->value.tval=0;
+                head->dtype = 2;
 			}
 			ParseTreeNode *stmts1=n1->left->sibling->sibling->sibling;
 			temp->child=genAST(stmts1,temp);
@@ -217,10 +223,14 @@ ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent){
 		if(child->nodeSymbol.t==TERMINAL&&(child->nodeSymbol.ele.term==INTEGER||child->nodeSymbol.ele.term==REAL)){
 			temp->tokenptr=child->tokenptr;
 			temp->vartype=0;
-			if(child->nodeSymbol.ele.term==INTEGER)
+			if(child->nodeSymbol.ele.term==INTEGER){
 				temp->value.num= child->tokenptr->lexeme.num;
-			else
+                temp->dtype=0;
+            }
+			else{
+                temp->dtype=1;
 				temp->value.r_num= child->tokenptr->lexeme.r_num;
+            }
 		}
 		else{
 			ParseTreeNode *which = child->sibling->left;
