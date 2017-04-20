@@ -15,6 +15,8 @@ HashTreeNode *reuseInstancesHT[200];
 int outputAssCheck[200];
 int assCheckItr;
 
+int verbose = 0;
+
 /*To Be Removed*/
 void testAST(ASTNode *root){
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULEDECLARATION||
@@ -72,7 +74,7 @@ int evaluateOperator(ASTNode* node, char ch){
             else if (ch == 'r')
                 node->dtype = _booltype;
             else {
-                printf("Types in expr match, both int but expr is logical\n");
+                printf("ERROR : Type match at line %d and are integer, but expression is logical.\n", node->tokenptr->line_no);
                 return 0;
             }
         }
@@ -82,7 +84,7 @@ int evaluateOperator(ASTNode* node, char ch){
             else if(ch == 'r')
                 node->dtype = _booltype;
             else {
-                printf("Types in expr match, both real but expr is logical\n");
+                printf("ERROR : Type match at line %d and are real, but expression is logical.\n", node->tokenptr->line_no);
                 return 0;
             }
         }
@@ -91,7 +93,9 @@ int evaluateOperator(ASTNode* node, char ch){
         }
     }
     else {
-        printf("Type mismatch in expression %d and %d!\n", t1, t2);
+        if (verbose)
+            printf("ERROR : Type mismatch in expression %d and %d!\n", t1, t2);
+        printf("ERROR : Type mismatch at line %d.\n", node->tokenptr->line_no);
         return 0;
     }
     return 1;
@@ -129,10 +133,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 			if(entry!=NULL){
 				if(entry->defined==0){
 					entry->defined=1;
-					printf("declared module : %s\n",entry->key);
+                    if (verbose)
+					    printf("declared module : %s\n",entry->key);
 				}
 				else{
-					printf("Module redefined.\n");
+					printf("ERROR : Module %s Redefined at line %d.\n", entry->key, root->tokenptr->line_no);////////////////////////
 				}
 			}
 			else{
@@ -140,7 +145,8 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 				entry= find2(root->tokenptr->lexeme.iden,global,1);
 			}
 			if(root->gnode.non_term==MODULENT){
-				printf("Adding i/o lists.\n");
+				if(verbose)
+                    printf("Adding i/o lists.\n");
 				add_plist(entry,root);
 			}
 			strcpy(htroot->table_name,root->tokenptr->lexeme.iden);
@@ -149,10 +155,12 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 		else if(root->t==NONTERMINAL&&root->stmttype==ITERATIVESTMT){
 			strcpy(htroot->table_name,root->looptype==FOR?"FOR":"WHILE");
 			strcpy(htroot->function_name,function_name);
+            htroot->curr_offset = htroot->parent->curr_offset;
 		}
 		else{
 			strcpy(htroot->table_name,"SWITCH");
 			strcpy(htroot->function_name,function_name);
+            htroot->curr_offset = htroot->parent->curr_offset;
 		}
 	}
 
@@ -165,18 +173,19 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 //				printf("(child ht :%s) --> (%s)\n",htroot->table_name,htroot->parent->table_name);
 			int st = addKey2(root,htroot);
 			if(st==-1){
-				printf("Previosly Declared ID redeclared.\n");
+				printf("ERROR : ID %s Redeclared at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no); ///////////////////////////
 			}
 		}
 		else{
 //			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
 			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
 			if(entry==NULL) {
-                printf("ID not found in table :%s\n",htroot->table_name);
+                printf("ERROR : ID %s at line %d not declared.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no); ///////////
                 flag = 0;
             }
 			else{
-//				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
+                if(verbose)
+				    printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
 			}
 		}
 /////////        flag = 1;
@@ -184,24 +193,24 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 	/*Add function declarations to symbol table*/
 	if(root->t==NONTERMINAL&&root->gnode.non_term==MODULEDECLARATION){
 		if(strcmp(htroot->table_name,"GLOBAL")!=0){
-			printf("ERROR in module name insertion.\n");
+			printf("ERROR : Module %s's name not correctly inserted.\n", root->tokenptr->lexeme.iden); ////////////////////
             flag = 0;
 		}
 		int st = addKey2(root,htroot);
 		if(st==-1) {
-            printf("Module redeclared.\n");
+            printf("ERROR : Module %s redeclared at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////
             flag = 0;
         }
     //////////    flag = 1;
 	}
 	/*If not declaration check in symbol table for presence*/
 	else if(root->t==NONTERMINAL&&root->gnode.non_term==VAR){
-        int type;
+        int type = 9;
 		if(root->vartype==1){
 //			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
 			HashTableNode *entry=find2(root->tokenptr->lexeme.iden,htroot,0);
 			if(entry==NULL) {
-                printf("ID not found in table :%s\n",htroot->table_name);
+                printf("ERROR : ID %s at line %d not declared.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no); ///////////
                 flag = 0;
             }
 			else{
@@ -209,10 +218,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
                 if (root->parent->gnode.non_term == ASSIGNMENTSTMT)
                     entry->assignedFlag = 1;
                 if(entry->readOnly == 1 && root->parent->gnode.non_term == ASSIGNMENTSTMT){
-                    printf("Loop index assigned in loop body!\n");
+                    printf("ERROR : Loop index %s assigned in For Loop body at line %d!\n", entry->key, root->tokenptr->line_no);////
                     flag = 0;
                 }
-//				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
+                if (verbose)
+    				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
 			}
 		}
 		else if(root->vartype==2){
@@ -220,7 +230,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 //				printf("ID in source code: %s --> ",root->child->tokenptr->lexeme.iden);
 			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
 			if(entry==NULL) {
-                printf("ID not found in table :%s\n",htroot->table_name);
+                printf("ERROR : ID %s at line %d not declared.\n", root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ///////////
                 flag = 0;
             }
 			else{
@@ -229,22 +239,23 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
                 if (root->parent->gnode.non_term == ASSIGNMENTSTMT)
                     entry->assignedFlag = 1;
                 if(entry->readOnly == 1 && root->parent->gnode.non_term == ASSIGNMENTSTMT){
-                    printf("Loop index assigned in loop body!\n");
+                    printf("ERROR : Loop index %s assigned in For Loop body at line %d!\n", entry->key, root->child->tokenptr->line_no);////
                     flag = 0;
                 }
                 // check index
                 HashTableNode *entry2 = find2(root->child->sibling->tokenptr->lexeme.iden,
                         htroot, 0);
                 if (entry2 == NULL){
-                    printf("Index of array not found in the table: %s\n", htroot->table_name);
+                    printf("ERROR : Loop Index %s of array %s at line %d not declared.\n", root->child->sibling->tokenptr->lexeme.iden, root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); //////////////////////////////////////////////////////
                     flag = 0;
                 }
                 else if(entry2->datatype != _integertype){
-                    printf("Index of array is not of type integer!\n");
+                    printf("ERROR : Loop Index %s of array %s at line %d is not of type integer.\n", root->child->sibling->tokenptr->lexeme.iden, root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ////////////////////////////////////////////////////////////////////////
                     flag = 0;
                 }
-//				printf("(dt:%d,ss:%d,es:%d,lr:%d,rr:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,
-//					entry->ast_node->lrange,entry->ast_node->rrange,entry->offset);
+                if (verbose)
+    				printf("(dt:%d,ss:%d,es:%d,lr:%d,rr:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,
+					entry->ast_node->lrange,entry->ast_node->rrange,entry->offset);
 			}
 		}
         else if (root->vartype == 0){
@@ -262,7 +273,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         reuseInstancesHT[globalItr++] = htroot;
         // Check recursion!
         if (strcmp(htroot->function_name, root->tokenptr->lexeme.iden) == 0){
-            printf("Recursive function call within definition!\n");
+            printf("ERROR : Recursive function call of %s within definition at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no); /////////
             flag = 0;
         }
         
@@ -284,11 +295,12 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         if (t2 == _arrtype)
             t2 = root->child->arrtype;
         if (chec2 == 0 || check == 0) flag = 0;
-        if (t1 != t2 && flag != 0){
-            printf("Type mismatch in assignment statement!\n");
+        if (t1 != t2){
+            printf("ERROR : Type mismatch at line %d.\n", root->child->tokenptr->line_no);/////////////////////////////
             flag = 0;
         }
-        printf("In assignment statement types are %d and %d\n", t1, t2);
+        if (verbose)
+            printf("In assignment statement types are %d and %d\n", t1, t2);
         dochild = 0;
     }
     // Iterative statement 
@@ -298,11 +310,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             // ALSO ADD READONLY FLAG
 			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
 			if(entry==NULL) {
-                printf("Index in for loop not found in table :%s\n",htroot->table_name);
+                printf("ERROR : Loop Index %s of array %s at line %d not declared.\n", root->child->sibling->tokenptr->lexeme.iden, root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); //////////////////////////////////////////////////////
                 flag =0;
             }
             if (entry->datatype != _integertype) {
-                printf("Index in for loop is not of type integer!\n");
+                printf("ERROR : Loop Index %s of array %s at line %d is not of type integer.\n", root->child->sibling->tokenptr->lexeme.iden, root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); /////////////////////////////
                 flag =0;
             }
             // Make the index readonly
@@ -315,7 +327,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             check = parseAST(root->child, htroot);
             chec2 = parseAST(root->child->sibling, htroot);
             if (root->child->dtype != _booltype){
-                printf("While loop condition not of type boolean!\n");
+                printf("ERROR : While loop condition at line %d is not of type boolean!\n", root->child->tokenptr->line_no);//////////
                 flag = 0;
             }
             if (chec2 == 0 || check == 0)
@@ -329,7 +341,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         if (root->child->gnode.term == GET_VALUE){
 			HashTableNode *entry=find2(root->child->sibling->tokenptr->lexeme.iden,htroot,0);
 			if(entry==NULL) {
-                printf("ID in IOSTMNT not found in table :%s\n",htroot->table_name);
+                printf("ERROR : ID %s at line %d not declared.\n", root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ///////////
                 flag = 0;
             }
         }
@@ -343,22 +355,23 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             root->stmttype == CONDITIONALSTMT){
 		HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
         if (entry == NULL){
-            printf("ID in CONDITIONAL not found in table :%s\n",htroot->table_name);
+            printf("ERROR : ID %s at line %d not declared.\n", root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ///////////
             flag = 0;
         }
         int intorbool = 0; // 0 is int, 2 is bool
-        printf("entry ka datatype! %d %s\n", entry->datatype, entry->key);
+        if (verbose)
+            printf("entry ka datatype! %d %s\n", entry->datatype, entry->key);
         if (entry->datatype == _integertype){
             intorbool = 0;
             if(root->child->sibling->sibling->child == NULL){
-                printf("No default statement but id is integer!\n");
+                printf("ERROR : No default statement but switch ID is integer at line %d!\n", root->child->tokenptr->line_no);/////////////////////////////////
                 flag = 0;
             }
         }
         else if (entry->datatype == _booltype){
             intorbool = 2;
             if(root->child->sibling->sibling->child != NULL){
-                printf("Default statement exists but id is boolean!\n");
+                printf("ERROR : Default statement exists at line %d but switch ID is boolean!\n", root->child->tokenptr->line_no);//////////////////////////////
                 flag = 0;
             }
         }
@@ -368,7 +381,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         int j = 0, i;
         while(casestmts != NULL){
             if (casestmts->dtype != intorbool){
-                printf("Case statement is not of type that matches with ID!\n");
+                printf("ERROR : Case statement at line %d is not of type that is expected!\n", casestmts->tokenptr->line_no);////////////////////////////
                 flag = 0;
             }
             if (casestmts->dtype == _integertype)
@@ -379,7 +392,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             i = 0;
             for(i= 0 ; i < j-1; i++){
                 if (caseval[i] == caseval[j-1]){
-                    printf("Case value already exits\n");
+                    printf("ERROR : Duplicate Case value at line %d.\n", casestmts->tokenptr->line_no);//////////////////////
                 }
             }
             check = parseAST(casestmts->child, htroot);
@@ -437,15 +450,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             if (entry == NULL) flag = 0;
             else {
                 if (entry->assignedFlag == 0){
-                    doneAss = 0;
-                    break;
+                    printf("ERROR : The output parameter %s of module %s does not get assigned a value.\n", entry->key, root->tokenptr->lexeme.iden);////////////////////////////
+                    flag = 0;
                 }
             }
             child = child->sibling;
-        }
-        if (doneAss == 0){
-            printf("Return variables of module not assigned in module body.\n");
-            flag = 0;
         }
     }
 
@@ -459,7 +468,7 @@ int checkType(ASTNode *inpChild, ASTNode *inHT, HashTreeNode *htroot){
     HashTableNode *entry;
     entry = find2(inpChild->tokenptr->lexeme.iden, htroot, 0);
     if (entry == NULL){
-        printf("Id not present in the Symbol Table.\n");
+        printf("ERROR : ID %s at line %d not declared.\n", inpChild->child->tokenptr->lexeme.iden, inpChild->child->tokenptr->line_no); ///////////
         return 0;
     }
     int type = inHT->dtype;
@@ -469,7 +478,8 @@ int checkType(ASTNode *inpChild, ASTNode *inHT, HashTreeNode *htroot){
     if (type == _arrtype)
         type = inHT->arrtype;
     if (type != type2){
-        printf("The types are %d and %d  ", type, type2);
+        if (verbose)
+            printf("The types are %d and %d  ", type, type2);
         return 0;
     }
     return 1;
@@ -491,37 +501,37 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
         int tempx = 0;
         while(inpChild!=NULL){
             if (childArrIn[tempx] == NULL){
-                printf("The numbers of parameters dont match for input parameters of module reuse!\n");
+                printf("ERROR : Input parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
                 break;
             }
             check = checkType(inpChild, childArrIn[tempx], htroot);
             if (check == 0) {
                 flag = 0;
-                printf("Type mismatch in module reuse input parameters!\n");
+                printf("ERROR : Input parameter %s type mismatch of module %s at line %d.\n", inpChild->tokenptr->lexeme.iden, root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
             }
             tempx++;
             inpChild = inpChild->sibling;
         }
         if(inpChild == NULL && childArrIn[tempx] != NULL)
-            printf("The numbers of parameters dont match for input parameters of module reuse!\n");
+            printf("ERROR : Input parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
 
         tempx = 0;
         inpChild = root->child->child;
         while(inpChild!=NULL){
             if (childArrOut[tempx] == NULL){
-                printf("The numbers of parameters dont match for return parameters of module reuse!\n");
+                printf("ERROR : Output parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
                 break;
             }
             check = checkType(inpChild, childArrOut[tempx], htroot);
             if (check == 0) {
                 flag = 0;
-                printf("Type mismatch in module reuse return parameters!\n");
+                printf("ERROR : Output parameter %s type mismatch of module %s at line %d.\n", inpChild->tokenptr->lexeme.iden, root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
             }
             tempx++;
             inpChild = inpChild->sibling;
         }
         if(inpChild == NULL && childArrOut[tempx] != NULL)
-            printf("The numbers of parameters dont match for input parameters of module reuse!\n");
+            printf("ERROR : Output parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
         dochild = 0;
     }
     if (dochild){
@@ -541,5 +551,6 @@ int main(int argc,char* argv[]){
 	HashTreeNode *htroot= initTree();
 	parseAST(astroot,htroot);
     parseASTAgain(astroot, htroot);
+    //_printAST(astroot);
 	return 0;
 }

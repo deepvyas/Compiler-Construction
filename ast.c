@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ASTDef.h"
-
+#include "HashTreeDef.h"
 ASTNode* create_ast_node(){
 	ASTNode* node;
 	node = (ASTNode*)malloc(1*sizeof(ASTNode));
@@ -694,6 +694,13 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 
 void _printAST(ASTNode *ast_root){
 	if(ast_root==NULL) return;
+    if(ast_root->htPointer==NULL){
+        printf("HASHTABLE POINTER NOT PRESENT\n");
+    }
+    else{
+        HashTreeNode *ht = (HashTreeNode*)ast_root->htPointer;
+        printf("HASHTABLE HERE IS : %s\n",ht->table_name);
+    }
 	if(ast_root->child!=NULL){
 		printf("Child of %d : %d",ast_root->gnode.non_term,ast_root->child->gnode.non_term);
 	}
