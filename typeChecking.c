@@ -12,6 +12,9 @@ int globalItr = 0;
 int globalItr2 = 0;
 HashTreeNode *reuseInstancesHT[200];
 
+int outputAssCheck[200];
+int assCheckItr;
+
 /*To Be Removed*/
 void testAST(ASTNode *root){
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULEDECLARATION||
@@ -203,6 +206,12 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             }
 			else{
                 type = entry->datatype;
+                if (root->parent->gnode.non_term == ASSIGNMENTSTMT)
+                    entry->assignedFlag = 1;
+                if(entry->readOnly == 1 && root->parent->gnode.non_term == ASSIGNMENTSTMT){
+                    printf("Loop index assigned in loop body!\n");
+                    flag = 0;
+                }
 //				printf("(dt:%d,ss:%d,es:%d,off:%d)\n",entry->datatype,entry->startscope,entry->endscope,entry->offset);
 			}
 		}
@@ -217,6 +226,13 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 			else{
                 //printf("array shit seen bitch %d %s!\n", entry->ast_node->arrtype, entry->key);
                 type = entry->ast_node->arrtype;
+                if (root->parent->gnode.non_term == ASSIGNMENTSTMT)
+                    entry->assignedFlag = 1;
+                if(entry->readOnly == 1 && root->parent->gnode.non_term == ASSIGNMENTSTMT){
+                    printf("Loop index assigned in loop body!\n");
+                    flag = 0;
+                }
+                // check index
                 HashTableNode *entry2 = find2(root->child->sibling->tokenptr->lexeme.iden,
                         htroot, 0);
                 if (entry2 == NULL){
@@ -244,6 +260,12 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     // Module reuse statement to do in parse 2
     else if(root->t == NONTERMINAL && root->gnode.non_term == MODULEREUSESTMT){
         reuseInstancesHT[globalItr++] = htroot;
+        // Check recursion!
+        if (strcmp(htroot->function_name, root->tokenptr->lexeme.iden) == 0){
+            printf("Recursive function call within definition!\n");
+            flag = 0;
+        }
+        
     }
 
     // Assignment statement
@@ -283,8 +305,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
                 printf("Index in for loop is not of type integer!\n");
                 flag =0;
             }
+            // Make the index readonly
+            entry->readOnly = 1;
             check = parseAST(root->child->sibling, htroot);
             if (check == 0) flag = 0;
+            entry->readOnly = 0;
         }
         else { // while loop
             check = parseAST(root->child, htroot);
@@ -401,6 +426,32 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     if (root->child != NULL && root->t == NONTERMINAL && root->gnode.non_term != VAR)
         root->dtype = root->child->dtype;
 
+
+    // Check the output plist assigned for moduleNT
+    if (root->t == NONTERMINAL && root->gnode.non_term == MODULENT){
+        int doneAss = 1;
+        ASTNode *child = root->child->sibling->child;
+		HashTableNode *entry;
+        while (child != NULL){
+            entry=find2(child->tokenptr->lexeme.iden,htroot,0);
+            if (entry == NULL) flag = 0;
+            else {
+                if (entry->assignedFlag == 0){
+                    doneAss = 0;
+                    break;
+                }
+            }
+            child = child->sibling;
+        }
+        if (doneAss == 0){
+            printf("Return variables of module not assigned in module body.\n");
+            flag = 0;
+        }
+    }
+
+    
+    // add htroot to the node's htPointer because SWAG
+    root->htPointer = (HashTreeNode *)htroot;
     return flag;
 }
 

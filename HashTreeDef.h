@@ -18,6 +18,10 @@ struct HashTableNode{
 	ASTNode* output_plist[NOC];
 	int defined;
 	/*End*/
+    // For for loop restriction
+    int readOnly;
+    // For chekcing return types assigned in module declarations
+    int assignedFlag;
 	struct HashTableNode *next;
 };
 

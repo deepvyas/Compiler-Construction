@@ -90,6 +90,8 @@ int addKey2(ASTNode *ast_node,HashTreeNode *node){
 	tmp->startscope=ast_node->startscope;
 	tmp->endscope=ast_node->endscope;
 	tmp->datatype=ast_node->dtype;
+    tmp->readOnly = 0;
+    tmp->assignedFlag = 0;
 	int datatemp = tmp->datatype;
 	tmp->offset=node->curr_offset;
 	int data_incr;

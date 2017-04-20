@@ -5,6 +5,7 @@
 #include "./Stage1/parserDef.h"
 #include "./Stage1/lexerDef.h"
 #include "./Stage1/hashTable.h"
+//#include "HashTreeDef.h"
 typedef union{
 	int num;
 	float r_num;
@@ -23,10 +24,10 @@ struct ASTNode{
 	int rrange;
 	int arrtype; // 0 integer arr, 1 real arr, 2 bool arr
 	//SymbolTable Ptr
-	int scope;
 	int startscope;
 	int endscope;
 	tokenInfo *tokenptr;
+    int scope;
 	//==
 	//For operators
 	// STMT TYPE
@@ -37,9 +38,13 @@ struct ASTNode{
 	int sign;
 	// ITERTIVESMT
 	int looptype;
-	//IDLIST OR STATEMENT LIST 
+	//IDLIST OR STATEMENT LIST
+
 	int listcount;
 	struct ASTNode *lop,*rop;
+    // Pointer to the hashTable made void* and typecasted later
+    void *htPointer;
+
 	//Family
 	struct ASTNode *parent,*child,*sibling;
 };
