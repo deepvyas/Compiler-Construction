@@ -5,4 +5,8 @@ a.out
 *.h.gch
 *.gch
 *~
+asm
+*.asm
+*.o
+codeGenTestCases/
 
