@@ -2,20 +2,20 @@
 #include <stdlib.h>
 #include "ASTDef.h"
 #include "HashTreeDef.h"
+#include "typeCheckingDef.h"
 
 #define _integertype 0
 #define _realtype 1
 #define _booltype 2
 #define _arrtype 3
 
+int verbose = 0;
+
 int globalItr = 0;
 int globalItr2 = 0;
 HashTreeNode *reuseInstancesHT[200];
-
 int outputAssCheck[200];
 int assCheckItr;
-
-int verbose = 0;
 
 /*To Be Removed*/
 void testAST(ASTNode *root){
@@ -100,7 +100,6 @@ int evaluateOperator(ASTNode* node, char ch){
     }
     return 1;
 }
-
 
 int parseAST(ASTNode *root,HashTreeNode *htroot){
     // parseAST return 0 if parsing unsuccessful at the current node
@@ -544,13 +543,12 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
     return flag;
 }
 
-int main(int argc,char* argv[]){
+void typeCheck(char *filename){
 	ASTNode *astroot;
-	astroot= makeAST(argv[1]);
+	astroot= makeAST(filename);
 	// testAST(astroot);
 	HashTreeNode *htroot= initTree();
 	parseAST(astroot,htroot);
     parseASTAgain(astroot, htroot);
     //_printAST(astroot);
-	return 0;
 }
