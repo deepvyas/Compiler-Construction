@@ -49,4 +49,6 @@ int hashKey2(char *key);
 HashTableNode* find2(char *key,HashTreeNode *node,int res);
 int addKey2(ASTNode *ast_node,HashTreeNode *node);
 void add_plist(HashTableNode *ele,ASTNode *node);
+void printHashTree(HashTreeNode *htroot);
+void printHashNode(HashTableNode *hnode,char *fname,int level);
 #endif

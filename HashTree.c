@@ -153,3 +153,60 @@ void add_plist(HashTableNode *ele,ASTNode *node){
 		ele->output_plist[j]=NULL;
 	}
 }
+
+void printHashNode(HashTableNode *hnode,char *fname,int level){
+	char type[20];
+	int width; 	
+	char scope[20];
+	if(hnode->datatype==0){
+		strcpy(type,"integer");
+		width= INTEGEROFF;
+	}
+	else if(hnode->datatype==1){
+		strcpy(type,"real");
+		width=REALOFF;
+	}
+	else if(hnode->datatype==2){
+		strcpy(type,"boolean");
+		width=BOOLEANOFF;		
+	}
+	else(hnode->datatype==3){
+		char type2[20];
+		int size=(hnode->ast_node->rrange-hnode->ast_node->lrange+1);
+		if(hnode->ast_node->arrtype==0){
+			strcpy(type2,"integer");
+			width= INTEGEROFF*(size);
+		}
+		else if(hnode->ast_node->arrtype==1){
+			strcpy(type2,"real");
+			width= REALOFF*(size);
+		}
+		else if(hnode->ast_node->arrtype==2){
+			strcpy(type2,"boolean");
+			width=BOOLEANOFF*(size);		
+		}	
+		sprintf(type,"array(%d,%s)",size,type2);
+	}
+	sprintf(scope,"%d to %d",hnode->startscope,hnode->endscope);
+	printf("%-20s %-20s %-20s %-20s %-20d %-20d %-20d\n",hnode->key,type,fname,scope,level,width,hnode->offset);
+}
+
+void printHashTree(HashTreeNode *htroot,int level){
+	if(htroot==NULL) return;
+	HashElement *table=htroot->table;
+	int i;
+	HashTableNode *it;
+	for(i=0;i<TABLE_SIZE2;i++){
+		if(table[i].head!=NULL){
+			it=table[i].head;
+			while(it!=NULL){
+				printHashNode(it,htroot->function_name,level);
+				it=it->next;
+			}
+		}
+	}
+	int i;
+	for(i=0;i<node->tail;i++){
+		printHashTree(htroot->childQ[i],level++);
+	}
+}
