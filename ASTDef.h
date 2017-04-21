@@ -45,6 +45,8 @@ struct ASTNode{
     // Pointer to the hashTable made void* and typecasted later
     void *htPointer;
 
+    // FOR CODE GENERATION
+    int memoryLocation;
 	//Family
 	struct ASTNode *parent,*child,*sibling;
 };

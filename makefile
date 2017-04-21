@@ -3,5 +3,6 @@ all:
 #	gcc ast.c ASTDef.h Stage1/hashTable.c Stage1/lexer.c Stage1/parser.c -lm
 
 gen:
-	nasm -felf64 code.asm
-	ld code.o -o asm
+	nasm -f elf64 code.asm
+	gcc -m64 -o asm code.o
+	#ld code.o -o asm

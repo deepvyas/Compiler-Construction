@@ -9,6 +9,7 @@ ASTNode* create_ast_node(){
 	node->parent=NULL;
 	node->sibling=NULL;
 	node->tokenptr=NULL;
+    node->htPointer = NULL;
 	return node;
 }
 
@@ -211,13 +212,13 @@ ASTNode* resolve_var(ParseTreeNode *node,ASTNode *parent){
 	temp->t=node->nodeSymbol.t;
 	temp->gnode.non_term=node->nodeSymbol.ele.non_term;
 	ParseTreeNode *child=node->left;
-	temp->sign=1;
+	temp->sign=node->parseTreeSign;
 	temp->startscope=parent->startscope;
 	temp->endscope=parent->endscope;
 	if(child->nodeSymbol.t==TERMINAL&&
 		(child->nodeSymbol.ele.term==MINUS||child->nodeSymbol.ele.term==PLUS)){
 		temp= resolve_var(child->sibling,parent);
-	if(child->nodeSymbol.ele.term==MINUS) temp->sign=-1;
+	    if(node->parseTreeSign==-1) temp->sign=-1;
 	}
 	else{
 		if(child->nodeSymbol.t==TERMINAL&&(child->nodeSymbol.ele.term==INTEGER||child->nodeSymbol.ele.term==REAL)){
@@ -637,6 +638,7 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==EXPRESSION){
 		root->startscope=parent->startscope;
 		root->endscope=parent->endscope;
+        //root->sign=1;
 		ASTNode *aoeb = genAST(proot->left,root);
 		root->child=aoeb;
 		ASTNode *it=root->child;
@@ -661,7 +663,12 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 		root->endscope=parent->endscope;
 		ASTNode *tempast = resolve_exp_recursive(tempPtr,root);   
     // do herea
-    return tempast;
+        if(proot->nodeSymbol.ele.non_term==ARITHMETICORBOOLEANEXPR){
+            //printf("PROOT SIGN %d\n", proot->parseTreeSign);
+            if (proot->parseTreeSign == -1)
+                tempast->sign=-1;
+        }
+        return tempast;
 	}
 	/*Has sign of node and corresponding VAR node.*/
 	else if(proot->nodeSymbol.t==NONTERMINAL&&proot->nodeSymbol.ele.non_term==FACTOR){
@@ -674,9 +681,15 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 			xxx=proot->left;
 		}
 		if(xxx->left->nodeSymbol.t==TERMINAL&&xxx->left->nodeSymbol.ele.term==BO){
+            if (root->sign == -1){
+                xxx->left->sibling->parseTreeSign = -1;                
+            }
 			return genAST(xxx->left->sibling,parent);
 		}
 		else{
+            if (root->sign == -1){
+                xxx->left->parseTreeSign = -1;
+            }
 			return resolve_var(xxx->left,parent);
 		}
 	}
@@ -702,10 +715,10 @@ void _printAST(ASTNode *ast_root){
         printf("HASHTABLE HERE IS : %s\n",ht->table_name);
     }
 	if(ast_root->child!=NULL){
-		printf("Child of %d : %d",ast_root->gnode.non_term,ast_root->child->gnode.non_term);
+		printf("Child of %d : %d and sign is %d",ast_root->gnode.non_term,ast_root->child->gnode.non_term, ast_root->sign);
 	}
 	else if(ast_root->lop!=NULL&&ast_root->rop!=NULL){
-		printf("Left Op is : %d and Right Op is : %d \n",ast_root->lop->gnode.non_term,ast_root->rop->gnode.non_term);
+		printf("Left Op is : %d and Right Op is : %d and Sign is %d\n",ast_root->lop->gnode.non_term,ast_root->rop->gnode.non_term, ast_root->sign);
 		_printAST(ast_root->lop);
 		_printAST(ast_root->rop);
 		return;
@@ -713,18 +726,20 @@ void _printAST(ASTNode *ast_root){
 	else{
 		if(ast_root->tokenptr!=NULL){
 			if(ast_root->gnode.term==ID){
-				printf("Token at %d : %s and datatype is %d and ||scope|| is : %d--%d\n",
+				printf("Token at %d : %s and datatype is %d and ||scope|| is : %d--%d, and sign is %d\n",
 					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
-					ast_root->dtype,ast_root->startscope,ast_root->endscope);
+					ast_root->dtype,ast_root->startscope,ast_root->endscope, 
+                    ast_root->sign);
 			}
 			else{
-				printf("Token at %d : %s and ||scope|| is : %d--%d\n",
+				printf("Token at %d : %s and ||scope|| is : %d--%d, and sign is %d\n",
 					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
-					ast_root->startscope,ast_root->endscope);
+					ast_root->startscope,ast_root->endscope, 
+                    ast_root->sign);
 			}
 		}
 		else{
-			printf("Child of %d :\n",ast_root->gnode.non_term);
+			printf("Child of %d :\n with sign %d",ast_root->gnode.non_term, ast_root->sign);
 		}
 		return;
 	}

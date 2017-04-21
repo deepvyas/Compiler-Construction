@@ -9,7 +9,7 @@
 #define _booltype 2
 #define _arrtype 3
 
-int verbose = 0;
+int verbose = 1;
 
 int globalItr = 0;
 int globalItr2 = 0;
@@ -174,6 +174,10 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 			if(st==-1){
 				printf("ERROR : ID %s Redeclared at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no); ///////////////////////////
 			}
+            else{
+                root->htPointer = htroot;
+                // ID ke liye
+            }
 		}
 		else{
 //			printf("ID in source code: %s --> ",root->tokenptr->lexeme.iden);
@@ -228,6 +232,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
 //          if(root->child->sibling!=NULL)
 //				printf("ID in source code: %s --> ",root->child->tokenptr->lexeme.iden);
 			HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
+            root->child->htPointer = htroot;
 			if(entry==NULL) {
                 printf("ERROR : ID %s at line %d not declared.\n", root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ///////////
                 flag = 0;
@@ -318,6 +323,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             }
             // Make the index readonly
             entry->readOnly = 1;
+            root->child->htPointer = htroot;
             check = parseAST(root->child->sibling, htroot);
             if (check == 0) flag = 0;
             entry->readOnly = 0;
@@ -348,11 +354,14 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             check = parseAST(root->child->sibling, htroot);
             if (check == 0) flag = 0;
         }
+        root->child->htPointer = htroot;
+        root->child->sibling->htPointer = htroot;
         dochild = 0;
     }
     else if (root->t == NONTERMINAL && root->gnode.non_term == STATEMENT &&
             root->stmttype == CONDITIONALSTMT){
 		HashTableNode *entry=find2(root->child->tokenptr->lexeme.iden,htroot,0);
+        root->child->htPointer = htroot;
         if (entry == NULL){
             printf("ERROR : ID %s at line %d not declared.\n", root->child->tokenptr->lexeme.iden, root->child->tokenptr->line_no); ///////////
             flag = 0;
@@ -406,7 +415,6 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             casestmts = casestmts->sibling;
         }
 
-        
         dochild = 0;
     }
     
@@ -415,6 +423,8 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         ASTNode *child=root->child;
         while(child!=NULL){
             check = parseAST(child,htroot);
+            if(check == 0)
+                flag = 0;
             child=child->sibling;
         }
     }
@@ -499,6 +509,7 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
         
         int tempx = 0;
         while(inpChild!=NULL){
+            inpChild->htPointer = htroot;
             if (childArrIn[tempx] == NULL){
                 printf("ERROR : Input parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
                 break;
@@ -517,6 +528,7 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
         tempx = 0;
         inpChild = root->child->child;
         while(inpChild!=NULL){
+            inpChild->htPointer = htroot;
             if (childArrOut[tempx] == NULL){
                 printf("ERROR : Output parameters number mismatch of module %s at line %d.\n", root->tokenptr->lexeme.iden, root->tokenptr->line_no);/////////////////////////////////////////////////
                 break;
@@ -543,12 +555,3 @@ int parseASTAgain(ASTNode *root, HashTreeNode *globalHT){
     return flag;
 }
 
-void typeCheck(char *filename){
-	ASTNode *astroot;
-	astroot= makeAST(filename);
-	// testAST(astroot);
-	HashTreeNode *htroot= initTree();
-	parseAST(astroot,htroot);
-    parseASTAgain(astroot, htroot);
-    //_printAST(astroot);
-}

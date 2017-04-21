@@ -2,7 +2,7 @@
 #include <string.h>
 #include "HashTreeDef.h"
 #define TABLE_SIZE2 20
-#define INTEGEROFF 2
+#define INTEGEROFF 8
 #define REALOFF 4
 #define BOOLEANOFF 1
 
@@ -115,7 +115,14 @@ int addKey2(ASTNode *ast_node,HashTreeNode *node){
 		else
 			data_incr= BOOLEANOFF;
 	}
-	node->curr_offset+=data_incr;
+	//node->curr_offset+=data_incr;
+    HashTreeNode *temptemp = node;
+    char glbl[] = "GLOBAL";
+    if(temptemp->parent != NULL)
+        while(strcmp(temptemp->table_name, glbl)!= 0){
+            temptemp->curr_offset += data_incr;
+            temptemp = temptemp->parent;
+        }
 	tmp->next=table[hash].head;
 	table[hash].head=tmp;
 	return 0;

@@ -99,6 +99,10 @@ struct ParseTreeNode{
     tokenInfo *tokenptr;
     bool isLeaf;
     GrammarNode nodeSymbol;
+
+    // FOR AST SIGN PROPAGATION
+    int parseTreeSign;
+
     struct ParseTreeNode *parent, *sibling, *left;
 };
 typedef struct ParseTreeNode ParseTreeNode;
