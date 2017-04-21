@@ -11,7 +11,7 @@ HashTreeNode *htroot;
 FILE *fp;
 
 #define _arrtype 3
-#define encodingMul 100000
+#define encodingMul 1000000
 #define INTEGEROFF 8
 
 int typeCheck(char *filename){
@@ -57,6 +57,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             offset = getOffset(astroot->child, htroot); // memloc of arr
             offset = offset*encodingMul + getOffset(astroot->child->sibling, htroot); // memloc of index 2
             astroot->memoryLocation = offset;
+            astroot->decode=1;
         }
         else if (astroot->vartype == 0){
             int memLoc = pushOffset+initialOffset;
@@ -79,17 +80,33 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         dochild = 0;
     }
     // r8 and r9 fixed for the operators
-    else if(astroot->t == TERMINAL && (astroot->gnode.term == PLUS || 
-                astroot->gnode.term == MINUS || astroot->gnode.term == MUL || 
-                astroot->gnode.term == DIV)){
+    else if(astroot->t == TERMINAL && (astroot->gnode.term == PLUS || astroot->gnode.term == MINUS || astroot->gnode.term == MUL || astroot->gnode.term == DIV)){
         expression_cg(astroot->child, htroot);
         expression_cg(astroot->child->sibling, htroot);
         
         int memloc1 = astroot->child->memoryLocation+initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation+initialOffset;
+
         fprintf(fp, "\n;evaluating arith operator\n");
-        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        int flag = 0;
+        if (astroot->child->decode==1){
+            int arr = memloc1/encodingMul;
+            int indx = memloc1 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r8, [location + r11*%d + %d]\n",INTEGEROFF,arr); 
+            flag = 1;
+        }
+        if (astroot->child->sibling->decode==1){
+            int arr = memloc2/encodingMul;
+            int indx = memloc2 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r9, [location + r11*%d + %d]\n",INTEGEROFF,arr);  
+            flag = 1; 
+        }
+        if (!flag){
+            fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+            fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        }
 
         if (astroot->gnode.non_term == PLUS)
             fprintf(fp, "    add r8, r9\n"); 
@@ -114,18 +131,33 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         astroot->memoryLocation = storeloc;
         dochild = 0;
     }
-    else if(astroot->t == TERMINAL && (astroot->gnode.term == LE || 
-                astroot->gnode.term == LT || astroot->gnode.term == NE || 
-                astroot->gnode.term == GE || astroot->gnode.term == GT ||
-                astroot->gnode.term == EQ)){
+    else if(astroot->t == TERMINAL && (astroot->gnode.term == LE || astroot->gnode.term == LT || astroot->gnode.term == NE || astroot->gnode.term == GE || astroot->gnode.term == GT || astroot->gnode.term == EQ)){
         expression_cg(astroot->child, htroot);
         expression_cg(astroot->child->sibling, htroot);
         
         int memloc1 = astroot->child->memoryLocation+initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation + initialOffset;
+
         fprintf(fp, "\n;evaluating relational operator\n");
-        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        int flag = 0;
+        if (astroot->child->decode==1){
+            int arr = memloc1/encodingMul;
+            int indx = memloc1 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r8, [location + r11*%d + %d]\n",INTEGEROFF,arr); 
+            flag = 1;
+        }
+        if (astroot->child->sibling->decode==1){
+            int arr = memloc2/encodingMul;
+            int indx = memloc2 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r9, [location + r11*%d + %d]\n",INTEGEROFF,arr);  
+            flag = 1; 
+        }
+        if (!flag){
+            fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+            fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        }
 
         fprintf(fp, "    cmp r8, r9\n");
         if (astroot->gnode.non_term == LE)
@@ -153,16 +185,33 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         astroot->memoryLocation = storeloc;
         dochild = 0;
     }
-    else if(astroot->t == TERMINAL && (astroot->gnode.term == AND || 
-                astroot->gnode.term == OR)){
+    else if(astroot->t == TERMINAL && (astroot->gnode.term == AND || astroot->gnode.term == OR)){
         expression_cg(astroot->child, htroot);
         expression_cg(astroot->child->sibling, htroot);
         
         int memloc1 = astroot->child->memoryLocation + initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation + initialOffset;
+        
         fprintf(fp, "\n;evaluating logical operator\n");
-        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        int flag = 0;
+        if (astroot->child->decode==1){
+            int arr = memloc1/encodingMul;
+            int indx = memloc1 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r8, [location + r11*%d + %d]\n",INTEGEROFF,arr); 
+            flag = 1;
+        }
+        if (astroot->child->sibling->decode==1){
+            int arr = memloc2/encodingMul;
+            int indx = memloc2 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r9, [location + r11*%d + %d]\n",INTEGEROFF,arr);  
+            flag = 1; 
+        }
+        if (!flag){
+            fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+            fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
+        }
 
         if (astroot->gnode.non_term == AND)
             fprintf(fp, "    and r8, r9\n"); 
@@ -215,38 +264,93 @@ void codegen(ASTNode *astroot){
         expression_cg(astroot->child, htroot);
         int memloc1 = astroot->child->memoryLocation + initialOffset;
         int memloc2 = astroot->child->sibling->memoryLocation+initialOffset;
+
         fprintf(fp, "\n; assignment\n");
-        fprintf(fp, "    mov r8, [location+%d]\n", memloc2);
-        fprintf(fp, "    mov [location+%d], r8\n", memloc1);
+        int flag = 0, flag2 = 0;
+        if (astroot->child->sibling->decode==1){
+            int arr = memloc2/encodingMul;
+            int indx = memloc2 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov r8, [location + r11*%d + %d]\n",INTEGEROFF,arr);  
+            flag = 1; 
+        }
+        if (astroot->child->decode==1){
+            int arr = memloc1/encodingMul;
+            int indx = memloc1 - arr*encodingMul;
+            fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+            fprintf(fp, "    mov [location + r11*%d + %d], r8\n",INTEGEROFF,arr); 
+            flag2 = 1;
+        }
+        if (flag == 0){
+            fprintf(fp, "    mov r8, [location+%d]\n", memloc2);
+        }
+        if (flag2 == 0){
+            fprintf(fp, "    mov [location+%d], r8\n", memloc1);
+        }
 		// Other logic here.
 	}
 	else if(astroot->gnode.non_term==EXPRESSION){
 		printf("Expression code starts.\n");
 		expression_cg(astroot->child, htroot);
         astroot->memoryLocation = astroot->child->memoryLocation;
+        astroot->decode = astroot->child->decode;
+        printf("value here : %d\n", astroot->memoryLocation);
 	}
     else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
             astroot->stmttype == IOSTMT){
         if(astroot->child->gnode.term == GET_VALUE){
-            codegen(astroot->child->sibling);
-            int memloc1 = astroot->child->sibling->memoryLocation + initialOffset;
-            // Read value into memloc 1
-            fprintf(fp, "\n; getting value\n");
-            fprintf(fp, "    push rbp\n");
-            fprintf(fp, "    mov rdi, formatin\n");
-            fprintf(fp, "    lea rsi, [location+%d]\n", memloc1);
-            fprintf(fp, "    xor rax, rax\n");
-            fprintf(fp, "    call scanf\n");
-            fprintf(fp, "    pop rbp\n");
+            HashTableNode *entry = find2(astroot->child->sibling->tokenptr->lexeme.iden, htroot,0);
+            int datatype = entry->datatype;
+            if (datatype == 3){
+                ASTNode *idnode = astroot->child->sibling;
+                int lrange = entry->ast_node->lrange, rrange = entry->ast_node->rrange;
+                codegen(idnode);
+                int memloc1 = idnode->memoryLocation + initialOffset;
+                while(lrange != rrange+1){
+                    fprintf(fp, "\n; getting array value\n");
+                    fprintf(fp, "    push rbp\n");
+                    fprintf(fp, "    mov rdi, formatin\n");
+                    fprintf(fp, "    lea rsi, [location+%d]\n", memloc1);
+                    fprintf(fp, "    xor rax, rax\n");
+                    fprintf(fp, "    call scanf\n");
+                    fprintf(fp, "    pop rbp\n");
+                    memloc1 += INTEGEROFF;
+                    lrange++;
+                }
+            }
+            else {
+                codegen(astroot->child->sibling);
+                int memloc1 = astroot->child->sibling->memoryLocation + initialOffset;
+                // Read value into memloc 1
+                fprintf(fp, "\n; getting value\n");
+                fprintf(fp, "    push rbp\n");
+                fprintf(fp, "    mov rdi, formatin\n");
+                fprintf(fp, "    lea rsi, [location+%d]\n", memloc1);
+                fprintf(fp, "    xor rax, rax\n");
+                fprintf(fp, "    call scanf\n");
+                fprintf(fp, "    pop rbp\n");
+            }
         }
         else{
             expression_cg(astroot->child->sibling, htroot);
             int memloc1 = astroot->child->sibling->memoryLocation + initialOffset;
             // print value in memloc 1
+
             fprintf(fp, "\n; printing value\n");
             fprintf(fp, "    push rbp\n");
-            fprintf(fp, "    mov rdi, formatout\n");
-            fprintf(fp, "    mov rsi, [location+%d]\n", memloc1); 
+            fprintf(fp, "    mov rdi, formatout\n");            
+
+            int flag = 0;
+            if (astroot->child->sibling->decode==1){
+                int arr = memloc1/encodingMul;
+                int indx = memloc1 - arr*encodingMul;
+                fprintf(fp, "    mov r11, [location+%d]\n", indx); 
+                fprintf(fp, "    mov rsi, [location + r11*%d + %d]\n",INTEGEROFF,arr); 
+                flag = 1;
+            }
+            if (!flag){
+                fprintf(fp, "    mov rsi, [location+%d]\n", memloc1);
+            }           
             fprintf(fp, "    xor rax, rax\n");
             fprintf(fp, "    call printf\n");
             fprintf(fp, "    pop rbp\n");
@@ -264,7 +368,7 @@ void codegen(ASTNode *astroot){
         fprintf(fp, "    add qword [location+%d], 1\n", astroot->child->memoryLocation+initialOffset);
         fprintf(fp, "    sub r15, 1\n");
         fprintf(fp, "    cmp r14, r15\n");
-        fprintf(fp, "    jne _for_%d\n", initlabel);
+        fprintf(fp, "    jle _for_%d\n", initlabel);
         labelNumber++;
         fprintf(fp, "\n; For loop end\n");
     }

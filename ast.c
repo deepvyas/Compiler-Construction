@@ -9,7 +9,9 @@ ASTNode* create_ast_node(){
 	node->parent=NULL;
 	node->sibling=NULL;
 	node->tokenptr=NULL;
-    node->htPointer = NULL;
+  node->htPointer = NULL;
+  node->decode=0;
+  node->vartype=0;
 	return node;
 }
 

@@ -41,6 +41,8 @@ struct ASTNode{
 	//IDLIST OR STATEMENT LIST
 
 	int listcount;
+	/*FOR CODE GEN*/
+	int decode;
 	struct ASTNode *lop,*rop;
     // Pointer to the hashTable made void* and typecasted later
     void *htPointer;
