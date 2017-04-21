@@ -41,7 +41,7 @@ int getOffset(ASTNode *astroot, HashTreeNode *htroot){
 }
 
 int pushOffset = 0;
-int initialOffset = 1000;
+int initialOffset = 0;
 int labelNumber = 0;
 
 void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
@@ -59,11 +59,11 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         }
         if (astroot->sign == -1){
             fprintf(fp, ";negating var\n");
-            fprintf(fp, "   mov r8, [rbp-%d]\n", astroot->memoryLocation+initialOffset);
+            fprintf(fp, "   mov r8, [location+%d]\n", astroot->memoryLocation+initialOffset);
             fprintf(fp, "   neg r8\n");
             int newMemLoc = pushOffset+initialOffset;
             pushOffset += INTEGEROFF;
-            fprintf(fp, "   mov [rbp-%d], r8\n", newMemLoc);
+            fprintf(fp, "   mov [location+%d], r8\n", newMemLoc);
             astroot->memoryLocation = newMemLoc;
         }
         dochild = 0;
@@ -78,8 +78,8 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         int memloc1 = astroot->child->memoryLocation+initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation+initialOffset;
         fprintf(fp, "\n;evaluating arith operator\n");
-        fprintf(fp, "    mov r8, [rbp-%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [rbp-%d]\n", memloc2); 
+        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
 
         if (astroot->gnode.non_term == PLUS)
             fprintf(fp, "    add r8, r9\n"); 
@@ -99,7 +99,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             fprintf(fp, ";negating arith operator\n");
             fprintf(fp, "   neg r8\n");
         }
-        fprintf(fp, "    mov [rbp-%d], r8\n", storeloc);
+        fprintf(fp, "    mov [location+%d], r8\n", storeloc);
         astroot->memoryLocation = storeloc;
         dochild = 0;
     }
@@ -113,8 +113,8 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         int memloc1 = astroot->child->memoryLocation+initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation + initialOffset;
         fprintf(fp, "\n;evaluating relational operator\n");
-        fprintf(fp, "    mov r8, [rbp-%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [rbp-%d]\n", memloc2); 
+        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
 
         fprintf(fp, "    cmp r8, r9\n");
         if (astroot->gnode.non_term == LE)
@@ -138,7 +138,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             fprintf(fp, ";negating relational operator\n");
             fprintf(fp, "   neg r8\n");
         }
-        fprintf(fp, "    mov [rbp-%d], r8\n", storeloc);
+        fprintf(fp, "    mov [location+%d], r8\n", storeloc);
         astroot->memoryLocation = storeloc;
         dochild = 0;
     }
@@ -150,8 +150,8 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
         int memloc1 = astroot->child->memoryLocation + initialOffset, 
             memloc2 = astroot->child->sibling->memoryLocation + initialOffset;
         fprintf(fp, "\n;evaluating logical operator\n");
-        fprintf(fp, "    mov r8, [rbp-%d]\n", memloc1); 
-        fprintf(fp, "    mov r9, [rbp-%d]\n", memloc2); 
+        fprintf(fp, "    mov r8, [location+%d]\n", memloc1); 
+        fprintf(fp, "    mov r9, [location+%d]\n", memloc2); 
 
         if (astroot->gnode.non_term == AND)
             fprintf(fp, "    and r8, r9\n"); 
@@ -163,7 +163,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             fprintf(fp, ";negating logical operator\n");
             fprintf(fp, "   neg r8\n");
         }
-        fprintf(fp, "    mov [rbp-%d], r8\n", storeloc);
+        fprintf(fp, "    mov [location+%d], r8\n", storeloc);
         astroot->memoryLocation = storeloc;
         dochild = 0;
     }
@@ -217,12 +217,10 @@ void codegen(ASTNode *astroot){
             fprintf(fp, "\n; getting value\n");
             fprintf(fp, "    push rbp\n");
             fprintf(fp, "    mov rdi, formatin\n");
-            fprintf(fp, "    mov rsi, location\n");
+            fprintf(fp, "    lea rsi, [location+%d]\n", memloc1);
             fprintf(fp, "    xor rax, rax\n");
             fprintf(fp, "    call scanf\n");
             fprintf(fp, "    pop rbp\n");
-            fprintf(fp, "    mov rax, [location]\n");
-            fprintf(fp, "    mov [rbp-%d], rax\n", memloc1);
         }
         else{
             expression_cg(astroot->child->sibling, htroot);
@@ -231,7 +229,7 @@ void codegen(ASTNode *astroot){
             fprintf(fp, "\n; printing value\n");
             fprintf(fp, "    push rbp\n");
             fprintf(fp, "    mov rdi, formatout\n");
-            fprintf(fp, "    mov rsi, [rbp-%d]\n", memloc1); 
+            fprintf(fp, "    mov rsi, [location+%d]\n", memloc1); 
             fprintf(fp, "    xor rax, rax\n");
             fprintf(fp, "    call printf\n");
             fprintf(fp, "    pop rbp\n");
@@ -261,6 +259,6 @@ int main(int argc,char* argv[]){
 	fprintf(fp,"section .data\n");
 	fprintf(fp,"    formatout:    %s\n", format);
 	fprintf(fp,"    formatin:    %s\n", formatin);
-    fprintf(fp,"    location:    times 8 db 0\n");
+    fprintf(fp,"    location:    times 4096 db 0\n");
 	return 0;
 }
