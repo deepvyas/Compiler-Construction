@@ -89,7 +89,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             fprintf(fp, "    imul r8, r9\n"); 
         else if (astroot->gnode.non_term == DIV){
             fprintf(fp, "    xor rax, rax\n");// TO clear the contents
-            fprintf(fp, "    mov rax, r8w\n");
+            fprintf(fp, "    mov rax, r8\n");
             fprintf(fp, "    idiv r9\n"); 
             fprintf(fp, "    mov r8, rax\n");// move back
         }
@@ -200,13 +200,19 @@ void codegen(ASTNode *astroot){
         astroot->memoryLocation = getOffset(astroot, htroot);
     }
 	else if(astroot->gnode.non_term==ASSIGNMENTSTMT){
-		printf("Generating expression code first.\n");
 		codegen(astroot->child->sibling);
+        expression_cg(astroot->child, htroot);
+        int memloc1 = astroot->child->memoryLocation + initialOffset;
+        int memloc2 = astroot->child->sibling->memoryLocation+initialOffset;
+        fprintf(fp, "\n; assignment\n");
+        fprintf(fp, "    mov r8, [location+%d]\n", memloc2);
+        fprintf(fp, "    mov [location+%d], r8\n", memloc1);
 		// Other logic here.
 	}
 	else if(astroot->gnode.non_term==EXPRESSION){
 		printf("Expression code starts.\n");
 		expression_cg(astroot->child, htroot);
+        astroot->memoryLocation = astroot->child->memoryLocation;
 	}
     else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
             astroot->stmttype == IOSTMT){
