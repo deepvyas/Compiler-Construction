@@ -9,4 +9,5 @@ asm
 *.asm
 *.o
 codeGenTestCases/
+compiler
 

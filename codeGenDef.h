@@ -4,5 +4,6 @@
 #include "HashTreeDef.h"
 
 void codegen(ASTNode *astroot);
+int typeCheck(char *filename);
 
 #endif

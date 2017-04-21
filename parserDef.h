@@ -122,7 +122,7 @@ ParseTreeNode* getGrammarRules(ParseTreeNode *root, int grammarIndex);
 void populateParseTree(ParseTreeNode *root, FILE **fp, int flag);
 ParseTreeNode* parseInputSourceCode(char *testcaseFile, int flag);
 void __printParseTree(FILE *fp, ParseTreeNode *root);
-void printParseTree(char *outfile);
+void printParseTree(FILE *fp);
 
 
 #endif

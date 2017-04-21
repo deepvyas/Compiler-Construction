@@ -448,20 +448,20 @@ void codegen(ASTNode *astroot){
 	}
 }
 
-int main(int argc,char* argv[]){
-	fp = fopen(argv[2],"w");
-    int check = typeCheck(argv[1]);
-    ASTNode *astroot = ast_root;
-    if(check)
-        codegen(astroot->child->sibling->sibling);
-    // _printAST(ast_root);
-    fprintf(fp,"    mov rax, 0\n");
-	fprintf(fp,"    ret\n");
-    char format[] = "db \"%d\", 10, 0";
-    char formatin[] = "db \"%d\", 0";
-	fprintf(fp,"section .data\n");
-	fprintf(fp,"    formatout:    %s\n", format);
-	fprintf(fp,"    formatin:    %s\n", formatin);
-    fprintf(fp,"    location:    times 65536 db 0\n");
-	return 0;
-}
+//int main(int argc,char* argv[]){
+	//fp = fopen(argv[2],"w");
+    //int check = typeCheck(argv[1]);
+    //ASTNode *astroot = ast_root;
+    //if(check)
+        //codegen(astroot->child->sibling->sibling);
+    //// _printAST(ast_root);
+    //fprintf(fp,"    mov rax, 0\n");
+	//fprintf(fp,"    ret\n");
+    //char format[] = "db \"%d\", 10, 0";
+    //char formatin[] = "db \"%d\", 0";
+	//fprintf(fp,"section .data\n");
+	//fprintf(fp,"    formatout:    %s\n", format);
+	//fprintf(fp,"    formatin:    %s\n", formatin);
+    //fprintf(fp,"    location:    times 65536 db 0\n");
+	//return 0;
+//}

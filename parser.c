@@ -1482,8 +1482,8 @@ void __printParseTree(FILE *fp, ParseTreeNode *root){
     }
 }
 
-void printParseTree(char *outfile){
-    FILE *fp = fopen(outfile, "w");
+void printParseTree(FILE *fp){
+    //FILE *fp = fopen(outfile, "w");
     __printParseTree(fp, root);
 }
 

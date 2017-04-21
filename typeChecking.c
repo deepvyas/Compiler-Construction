@@ -9,7 +9,7 @@
 #define _booltype 2
 #define _arrtype 3
 
-int verbose = 1;
+int verbose = 0;
 
 int globalItr = 0;
 int globalItr2 = 0;
