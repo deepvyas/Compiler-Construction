@@ -2,7 +2,7 @@
 #include <string.h>
 #include "HashTreeDef.h"
 #define TABLE_SIZE2 20
-#define INTEGEROFF 8
+#define INTEGEROFF 8	
 #define REALOFF 4
 #define BOOLEANOFF 1
 

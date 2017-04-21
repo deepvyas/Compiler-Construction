@@ -99,6 +99,7 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             fprintf(fp, "    imul r8, r9\n"); 
         else if (astroot->gnode.non_term == DIV){
             fprintf(fp, "    xor rax, rax\n");// TO clear the contents
+            fprintf(fp, "    xor rdx,rdx\n");
             fprintf(fp, "    mov rax, r8\n");
             fprintf(fp, "    idiv r9\n"); 
             fprintf(fp, "    mov r8, rax\n");// move back
@@ -251,6 +252,36 @@ void codegen(ASTNode *astroot){
             fprintf(fp, "    pop rbp\n");
         }
     }
+    else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
+            astroot->stmttype == ITERATIVESTMT&&astroot->looptype==FOR){
+        codegen(astroot->child);
+        fprintf(fp, "\n; For loop generation\n");
+        fprintf(fp, "    mov r14, %d\n",astroot->child->lrange);
+        fprintf(fp, "    mov r15, %d\n",astroot->child->rrange);
+        fprintf(fp, "_for_%d:\n",labelNumber);
+        int initlabel=labelNumber;
+        codegen(astroot->child->sibling);
+        fprintf(fp, "    add qword [location+%d], 1\n", astroot->child->memoryLocation+initialOffset);
+        fprintf(fp, "    sub r15, 1\n");
+        fprintf(fp, "    cmp r14, r15\n");
+        fprintf(fp, "    jne _for_%d\n",initlabel);
+        labelNumber++;
+        fprintf(fp, "\n; For loop end\n");
+    }
+    else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
+            astroot->stmttype == ITERATIVESTMT&&astroot->looptype==WHILE){
+        fprintf(fp, "\n; While loop generation\n");
+        fprintf(fp, "_while_%d:\n",labelNumber);
+        int initlabel=labelNumber;
+        printf("While loop child :%d %d\n",astroot->child->t,astroot->child->gnode.non_term);
+        expression_cg(astroot->child,htroot);
+        fprintf(fp, "    mov r13,[location+%d]\n",astroot->child->memoryLocation+initialOffset);
+        codegen(astroot->child->sibling);
+        fprintf(fp, "    cmp r13, 0\n");
+        fprintf(fp, "    jne _while_%d\n",initlabel);
+        labelNumber++;
+        fprintf(fp, "\n; While loop end\n");   
+    }
 	else{
 		printf("Entering here : %d %d\n",astroot->gnode.non_term,EXPRESSION);
 		ASTNode *it=astroot->child;
@@ -275,6 +306,6 @@ int main(int argc,char* argv[]){
 	fprintf(fp,"section .data\n");
 	fprintf(fp,"    formatout:    %s\n", format);
 	fprintf(fp,"    formatin:    %s\n", formatin);
-    fprintf(fp,"    location:    times 4096 db 0\n");
+    fprintf(fp,"    location:    times 65536 db 0\n");
 	return 0;
 }
