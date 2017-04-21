@@ -1,8 +1,6 @@
-/*Team : 
- * Rishabh Joshi 2014A7PS102P
- * Deep Vyas 2014A7PS248P
- *
- */
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
 
 
 #include <stdio.h>

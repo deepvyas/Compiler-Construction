@@ -1,3 +1,7 @@
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
+
 /*Lexeme Size defined in lexerDef*/
 #ifndef _HASHTABLE_
 #define _HASHTABLE_

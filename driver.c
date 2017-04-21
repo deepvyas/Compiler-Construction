@@ -1,3 +1,7 @@
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,8 +26,8 @@ int main(int argc, char *argv[]){
         printf("Check usage!  ./compiler testcase.txt code.asm");
         return 0;
     }
-    int level = 5;
-    char message[] = "";
+    int level = 4;
+    char message[] = "Compiler completely working. Symbol table, Typechecking, semantic checking, code gen work";
     printf("LEVEL %d: %s", level, message);
     fp = fopen(argv[2], "w");
     
@@ -79,7 +83,7 @@ int main(int argc, char *argv[]){
                         printf("Errors compiling code....\n");
                     break;
             case 7: if (check)
-                        codegen(astroot->child->sibling->sibling);
+                        codegen(ast_root->child->sibling->sibling);
                     fprintf(fp, "   mov rax, 0\n");
                     fprintf(fp, "   ret\n");
                     char format[] = "db \"%d\", 10, 0";

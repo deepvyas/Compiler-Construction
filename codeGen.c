@@ -1,3 +1,7 @@
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "codeGenDef.h"
@@ -31,7 +35,7 @@ int getOffset(ASTNode *astroot, HashTreeNode *htroot){
     HashTableNode *entry; 
     entry = find2(astroot->tokenptr->lexeme.iden, htroot, 0);
     if (entry == NULL) {
-        printf("SOME PROBLEM!\n");
+        //printf("SOME PROBLEM!\n");
         return -1;
     }
     else {
@@ -290,11 +294,11 @@ void codegen(ASTNode *astroot){
 		// Other logic here.
 	}
 	else if(astroot->gnode.non_term==EXPRESSION){
-		printf("Expression code starts.\n");
+		//printf("Expression code starts.\n");
 		expression_cg(astroot->child, htroot);
         astroot->memoryLocation = astroot->child->memoryLocation;
         astroot->decode = astroot->child->decode;
-        printf("value here : %d\n", astroot->memoryLocation);
+        //printf("value here : %d\n", astroot->memoryLocation);
 	}
     else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
             astroot->stmttype == IOSTMT){
@@ -439,7 +443,7 @@ void codegen(ASTNode *astroot){
         labelNumber++;
     }
 	else{
-		printf("Entering here : %d %d\n",astroot->gnode.non_term,EXPRESSION);
+		//printf("Entering here : %d %d\n",astroot->gnode.non_term,EXPRESSION);
 		ASTNode *it=astroot->child;
 		while(it!=NULL){
 			codegen(it);

@@ -1,3 +1,7 @@
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
+
 #include "hashTable.h"
 #include <stdlib.h>
 #include <string.h>

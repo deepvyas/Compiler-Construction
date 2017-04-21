@@ -1,3 +1,7 @@
+// Batch Number - 38
+// 2014A7PS102P - RISHABH JOSHI
+// 2014A7PS248P - DEEP VYAS
+
 #include <stdlib.h>
 #include <string.h>
 #include "HashTreeDef.h"
@@ -59,7 +63,7 @@ HashTableNode* find2(char *key,HashTreeNode *node,int res){
 	else{
 		HashTableNode *itr=table[hash].head;
 		while(itr!=NULL){
-			if(itr->key==NULL) printf("Gadbad hai\n");
+//			if(itr->key==NULL) printf("Gadbad hai\n");
 			if(strcmp(key,itr->key)==0){ 
 				return itr;
 			}
@@ -131,7 +135,7 @@ int addKey2(ASTNode *ast_node,HashTreeNode *node){
 void add_plist(HashTableNode *ele,ASTNode *node){
 	if(node->gnode.non_term!=MODULENT)
 	{
-		printf("Error in adding i/o lists.\n");
+		//printf("Error in adding i/o lists.\n");
 	}
 	int i=0;
 	ASTNode *iplist=node->child->child;
