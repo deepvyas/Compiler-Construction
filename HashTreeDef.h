@@ -1,7 +1,7 @@
 #ifndef _HASHTREEDEF_
 #define _HASHTREEDEF_
-#include "./Stage1/parserDef.h"
-#include "./Stage1/lexerDef.h"
+#include "parserDef.h"
+#include "lexerDef.h"
 #include "ASTDef.h"
 #define NOC 20
 struct HashTableNode{

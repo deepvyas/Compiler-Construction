@@ -2,9 +2,9 @@
 #define _ASTDEF_
 
 #include <stdbool.h>
-#include "./Stage1/parserDef.h"
-#include "./Stage1/lexerDef.h"
-#include "./Stage1/hashTable.h"
+#include "parserDef.h"
+#include "lexerDef.h"
+#include "hashTable.h"
 //#include "HashTreeDef.h"
 typedef union{
 	int num;
