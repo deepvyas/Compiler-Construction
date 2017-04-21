@@ -69,4 +69,7 @@ ASTNode* resolve_exp_recursive(ParseTreeNode *node,ASTNode *parent);
 ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent);
 void _printAST(ASTNode *ast_root);
 ASTNode* makeAST(char *filename);
+void printAllocatedMemory(ASTNode *ast_root, int *number);
+void _printAllocatedMemory2(ParseTreeNode *proot, int *number);
+void printAllocatedMemory2(int *number);
 #endif

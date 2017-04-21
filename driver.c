@@ -14,6 +14,7 @@
 
 extern FILE *fp;
 extern ASTNode *ast_root;
+extern HashTreeNode *htroot;
 
 
 int main(int argc, char *argv[]){
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]){
     FILE *stdot = stdout;
     ASTNode *astroot = ast_root;
     int check;
+    check = typeCheck(argv[1]);
     int task;
 
     initTable();
@@ -47,6 +49,9 @@ int main(int argc, char *argv[]){
         printf("    6 - For compiling to verify syntactic and semantic correctness of code.\n");
         printf("    7 - For producting assembly code.\n");
         scanf("%d", &task);
+        int size_ast = 0, number_ast = 0;
+        int size_parse = 0, number_parse = 0;
+
         switch(task){
             case 1: printTokenList(argv[1]);
                     break;
@@ -55,9 +60,17 @@ int main(int argc, char *argv[]){
                     break;
             case 3: _printAST(ast_root);
                     break;
-            case 4: //printAllocatedMemory(ast_root);
+            case 4: printAllocatedMemory(ast_root, &number_ast);
+                    printAllocatedMemory2(&number_parse);
+                    size_ast = number_ast * sizeof(ASTNode);
+                    size_parse = number_parse * sizeof(ParseTreeNode);
+                    printf("Parse Tree NumberOfNodes: %d, AllocatedMemory: %d\n", number_parse, size_parse);
+                    printf("AST        NumberOfNodes: %d, AllocatedMemory: %d\n", number_ast, size_ast);
+                    printf("Compression percentage : %lf\n", 100.0*(size_parse-size_ast)/size_parse);
+
                     break;
-            case 5: //printSymbolTable();
+            case 5: printHashTree(htroot, 0);
+                    printf("HERE");
                     break;
             case 6: check = typeCheck(argv[1]);
                     if(check == 1)

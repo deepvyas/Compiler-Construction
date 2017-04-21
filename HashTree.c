@@ -170,7 +170,7 @@ void printHashNode(HashTableNode *hnode,char *fname,int level){
 		strcpy(type,"boolean");
 		width=BOOLEANOFF;		
 	}
-	else(hnode->datatype==3){
+	else if (hnode->datatype==3){
 		char type2[20];
 		int size=(hnode->ast_node->rrange-hnode->ast_node->lrange+1);
 		if(hnode->ast_node->arrtype==0){
@@ -192,6 +192,16 @@ void printHashNode(HashTableNode *hnode,char *fname,int level){
 }
 
 void printHashTree(HashTreeNode *htroot,int level){
+    char msg1[]="IdenLexeme";
+    char msg2[]="Type";
+    char msg3[]="Module Name";
+    char msg4[]="Line Number";
+    char msg5[]="Scope Number";
+    char msg6[]="Width";
+    char msg7[]="Offset";
+    if (level == 0)
+	    printf("%-20s %-20s %-20s %-20s %-20s %-20s %-20s\n",msg1, msg2,
+            msg3, msg4, msg5, msg6, msg7);
 	if(htroot==NULL) return;
 	HashElement *table=htroot->table;
 	int i;
@@ -205,8 +215,7 @@ void printHashTree(HashTreeNode *htroot,int level){
 			}
 		}
 	}
-	int i;
-	for(i=0;i<node->tail;i++){
-		printHashTree(htroot->childQ[i],level++);
+	for(i=0;i<htroot->tail;i++){
+		printHashTree(htroot->childQ[i],level+1);
 	}
 }

@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include "ASTDef.h"
 #include "HashTreeDef.h"
+
+extern char nt[53][100];
+extern char ter[57][100];
+ParseTreeNode *proot;
+
 ASTNode* create_ast_node(){
 	ASTNode* node;
 	node = (ASTNode*)malloc(1*sizeof(ASTNode));
@@ -710,50 +715,65 @@ ASTNode* genAST(ParseTreeNode *proot,ASTNode *parent){
 	}
 }
 
+void printAllocatedMemory(ASTNode *ast_root, int *number){
+	if(ast_root==NULL) return;
+
+    (*number)+=1;
+
+    ASTNode *it;
+	it=ast_root->child;
+	while(it!=NULL){
+		printAllocatedMemory(it, number);
+		it=it->sibling;
+	}
+}
+
+void _printAllocatedMemory2(ParseTreeNode *proot, int *number){
+	if(proot==NULL) return;
+
+    (*number)+=1;
+
+    ParseTreeNode *it;
+	it=proot->left;
+	while(it!=NULL){
+		_printAllocatedMemory2(it, number);
+		it=it->sibling;
+	}
+}
+
+void printAllocatedMemory2(int *number){
+    _printAllocatedMemory2(proot, number);
+}
+
 void _printAST(ASTNode *ast_root){
 	if(ast_root==NULL) return;
     if(ast_root->htPointer==NULL){
-        printf("HASHTABLE POINTER NOT PRESENT\n");
     }
     else{
         HashTreeNode *ht = (HashTreeNode*)ast_root->htPointer;
-        printf("HASHTABLE HERE IS : %s\n",ht->table_name);
     }
-	if(ast_root->child!=NULL){
-		printf("Child of %d and datatype %d: %d and sign is %d",ast_root->gnode.non_term,ast_root->dtype,ast_root->child->gnode.non_term, ast_root->sign);
-	}
-	else if(ast_root->lop!=NULL&&ast_root->rop!=NULL){
-		printf("Left Op is : %d and Right Op is : %d and Sign is %d\n",ast_root->lop->gnode.non_term,ast_root->rop->gnode.non_term, ast_root->sign);
-		_printAST(ast_root->lop);
-		_printAST(ast_root->rop);
-		return;
-	}
-	else{
-		if(ast_root->tokenptr!=NULL){
-			if(ast_root->gnode.term==ID){
-				printf("Token at %d : %s and datatype is %d and ||scope|| is : %d--%d, and sign is %d\n",
-					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
-					ast_root->dtype,ast_root->startscope,ast_root->endscope, 
-                    ast_root->sign);
-			}
-			else{
-				printf("Token at %d : %s and ||scope|| is : %d--%d, and sign is %d\n",
-					ast_root->gnode.non_term,ast_root->tokenptr->lexeme.iden,
-					ast_root->startscope,ast_root->endscope, 
-                    ast_root->sign);
-			}
-		}
-		else{
-			printf("Child of %d datatype : %d:\n with sign %d",ast_root->gnode.non_term,ast_root->dtype, ast_root->sign);
-		}
-		return;
-	}
-	ASTNode *it=ast_root->child->sibling;
-	while(it!=NULL){
-		printf(", %d",it->gnode.non_term);
-		it=it->sibling;
-	}
-	printf("\n");
+    char chi[100];
+    if (ast_root->t == TERMINAL)
+        strcpy(chi, ter[ast_root->gnode.term]);
+    else
+        strcpy(chi, nt[ast_root->gnode.non_term]);
+    printf("%s ", chi);
+
+    char tkn[100];
+    if (ast_root->tokenptr != NULL && ast_root->tokenptr->uniontype == 0){
+        strcpy(tkn, ast_root->tokenptr->lexeme.iden);
+        printf("%s\n", tkn);
+    }
+    else if (ast_root->tokenptr != NULL && ast_root->tokenptr->uniontype == 0){
+        printf("%d\n", ast_root->tokenptr->lexeme.num);
+    }
+    else if (ast_root->tokenptr != NULL && ast_root->tokenptr->uniontype == 0){
+        printf("%lf\n", ast_root->tokenptr->lexeme.r_num);
+    }
+    else 
+        printf("\n");
+
+    ASTNode *it;
 	it=ast_root->child;
 	while(it!=NULL){
 		_printAST(it);
@@ -761,13 +781,16 @@ void _printAST(ASTNode *ast_root){
 	}
 }
 
+
+
+
 ASTNode* makeAST(char *filename){
 	initTable();
 	populateGrammar();
 	compute_first();
 	compute_follow();
 	createParsingTable();
-	ParseTreeNode *proot=parseInputSourceCode(filename,0);
+	proot=parseInputSourceCode(filename,0);
 	ASTNode *ast_root=genAST(proot,NULL);
 	// _printAST(ast_root);
 	return ast_root;
