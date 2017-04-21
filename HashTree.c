@@ -3,8 +3,8 @@
 #include "HashTreeDef.h"
 #define TABLE_SIZE2 20
 #define INTEGEROFF 8	
-#define REALOFF 4
-#define BOOLEANOFF 1
+#define REALOFF 8
+#define BOOLEANOFF 8
 
 
 HashTreeNode* initTree(){

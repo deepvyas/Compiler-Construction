@@ -124,6 +124,7 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 		head->tokenptr=itr->left->sibling->left->tokenptr;
 		head->startscope=parent->startscope;
 		head->endscope=parent->endscope;
+		//printf("NUMBER %d\n", itr->left->sibling->left->nodeSymbol.ele.term);
 		if(itr->left->sibling->left->nodeSymbol.ele.term==INTEGER){
 			head->value.num= itr->left->sibling->left->tokenptr->lexeme.num;
             head->dtype = 0;
@@ -150,17 +151,19 @@ ASTNode* compressList(ParseTreeNode *proot,ASTNode *parent){
 			temp->startscope=parent->startscope;
 			temp->endscope=parent->endscope;
 			temp->tokenptr=n1->left->sibling->left->tokenptr;
+			// printf("NUMBER %d\n", n1->left->sibling->left->nodeSymbol.ele.term);
 			if(n1->left->sibling->left->nodeSymbol.ele.term==INTEGER){
 				temp->value.num= n1->left->sibling->left->tokenptr->lexeme.num;
-                head->dtype = 0;
+                temp->dtype = 0;
 			}
 			else if(n1->left->sibling->left->nodeSymbol.ele.term==TRUE){
 				temp->value.tval=1;
-                head->dtype = 2;
+                temp->dtype = 2;
 			}
 			else{
+				// printf("DTYPe 2 set!!!!!\n");
 				temp->value.tval=0;
-                head->dtype = 2;
+                temp->dtype = 2;
 			}
 			ParseTreeNode *stmts1=n1->left->sibling->sibling->sibling;
 			temp->child=genAST(stmts1,temp);
@@ -715,7 +718,7 @@ void _printAST(ASTNode *ast_root){
         printf("HASHTABLE HERE IS : %s\n",ht->table_name);
     }
 	if(ast_root->child!=NULL){
-		printf("Child of %d : %d and sign is %d",ast_root->gnode.non_term,ast_root->child->gnode.non_term, ast_root->sign);
+		printf("Child of %d and datatype %d: %d and sign is %d",ast_root->gnode.non_term,ast_root->dtype,ast_root->child->gnode.non_term, ast_root->sign);
 	}
 	else if(ast_root->lop!=NULL&&ast_root->rop!=NULL){
 		printf("Left Op is : %d and Right Op is : %d and Sign is %d\n",ast_root->lop->gnode.non_term,ast_root->rop->gnode.non_term, ast_root->sign);
@@ -739,7 +742,7 @@ void _printAST(ASTNode *ast_root){
 			}
 		}
 		else{
-			printf("Child of %d :\n with sign %d",ast_root->gnode.non_term, ast_root->sign);
+			printf("Child of %d datatype : %d:\n with sign %d",ast_root->gnode.non_term,ast_root->dtype, ast_root->sign);
 		}
 		return;
 	}

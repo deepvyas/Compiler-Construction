@@ -93,8 +93,12 @@ int evaluateOperator(ASTNode* node, char ch){
         }
     }
     else {
-        if (verbose)
+        if (verbose){
             printf("ERROR : Type mismatch in expression %d and %d!\n", t1, t2);
+            printf("Child : (%d,%d) and sibling (%d,%d)\n",node->child->t,node->child->gnode.non_term,
+                node->child->sibling->t,node->child->sibling->gnode.non_term);
+        }
+
         printf("ERROR : Type mismatch at line %d.\n", node->tokenptr->line_no);
         return 0;
     }
@@ -119,6 +123,9 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
     //printf("Root nonterm  %d and statement type %d\n", root->gnode.non_term, root->stmttype);
 	
     /*New Scope Generation*/
+    if (verbose)
+        if(root->t == NONTERMINAL && root->gnode.non_term == STATEMENTS)
+            printf("SHIT %d %d\n", root->dtype, root->parent->dtype);
 	if(root->t==NONTERMINAL&&(root->gnode.non_term==MODULENT||
 		root->stmttype==CONDITIONALSTMT||
 		root->stmttype==ITERATIVESTMT||
@@ -388,6 +395,9 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         int caseval[20];
         int j = 0, i;
         while(casestmts != NULL){
+            if(verbose)
+                printf("dtype %d and intorbool %d shiz is %d %d\n", casestmts->dtype, intorbool, casestmts->value.num,
+                        casestmts->gnode.non_term);
             if (casestmts->dtype != intorbool){
                 printf("ERROR : Case statement at line %d is not of type that is expected!\n", casestmts->tokenptr->line_no);////////////////////////////
                 flag = 0;
@@ -436,7 +446,7 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         if (check == 0) flag = 0;
     }
     else if (root->t == TERMINAL && (root->gnode.term == LT || root->gnode.term == LE ||
-            root->gnode.term == GE || root->gnode.term == GT &&
+            root->gnode.term == GE || root->gnode.term == GT ||
             root->gnode.term == EQ || root->gnode.term == NE)){
         check = evaluateOperator(root, 'r');
         if (check == 0) flag = 0;
@@ -445,7 +455,8 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         check = evaluateOperator(root, 'l');
         if (check == 0) flag = 0;
     }
-    if (root->child != NULL && root->t == NONTERMINAL && root->gnode.non_term != VAR)
+    if (root->child != NULL && root->t == NONTERMINAL && root->gnode.non_term != VAR && 
+        root->gnode.non_term != STATEMENTS)
         root->dtype = root->child->dtype;
 
 
@@ -467,7 +478,9 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
         }
     }
 
-    
+    if (verbose)
+        if(root->t == NONTERMINAL && root->gnode.non_term == STATEMENTS)
+            printf("SHIT2 %d %d\n", root->dtype, root->parent->dtype);
     // add htroot to the node's htPointer because SWAG
     root->htPointer = (HashTreeNode *)htroot;
     return flag;

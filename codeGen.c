@@ -264,7 +264,7 @@ void codegen(ASTNode *astroot){
         fprintf(fp, "    add qword [location+%d], 1\n", astroot->child->memoryLocation+initialOffset);
         fprintf(fp, "    sub r15, 1\n");
         fprintf(fp, "    cmp r14, r15\n");
-        fprintf(fp, "    jne _for_%d\n",initlabel);
+        fprintf(fp, "    jne _for_%d\n", initlabel);
         labelNumber++;
         fprintf(fp, "\n; For loop end\n");
     }
@@ -273,14 +273,66 @@ void codegen(ASTNode *astroot){
         fprintf(fp, "\n; While loop generation\n");
         fprintf(fp, "_while_%d:\n",labelNumber);
         int initlabel=labelNumber;
-        printf("While loop child :%d %d\n",astroot->child->t,astroot->child->gnode.non_term);
+        //printf("While loop child :%d %d\n",astroot->child->t, astroot->child->gnode.non_term);
         expression_cg(astroot->child,htroot);
-        fprintf(fp, "    mov r13,[location+%d]\n",astroot->child->memoryLocation+initialOffset);
+        fprintf(fp, "    mov r13,[location+%d]\n", astroot->child->memoryLocation+initialOffset);
         codegen(astroot->child->sibling);
         fprintf(fp, "    cmp r13, 0\n");
-        fprintf(fp, "    jne _while_%d\n",initlabel);
+        fprintf(fp, "    jne _while_%d\n", initlabel);
         labelNumber++;
         fprintf(fp, "\n; While loop end\n");   
+    }
+    else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == VAR){
+        expression_cg(astroot,htroot);
+    }
+    else if(astroot->t == NONTERMINAL && astroot->gnode.non_term == STATEMENT && 
+            astroot->stmttype == CONDITIONALSTMT){
+        codegen(astroot->child);
+        int memloc1=astroot->child->memoryLocation+initialOffset;
+        fprintf(fp, "\n; Switch statement\n");
+        int initlabel=labelNumber;
+        fprintf(fp, "    mov r10, [location+%d]\n", memloc1);
+        ASTNode *child=astroot->child->sibling->child;
+        int value;
+        while(child!=NULL){
+            if(child->dtype==0){
+                value = child->value.num;
+            }
+            else{
+                value= child->value.tval;
+            }
+            fprintf(fp, "    cmp r10,%d\n",value);
+            fprintf(fp, "    je _case_%d_%d_\n",initlabel,value);
+            child = child->sibling;
+        }
+
+        if (astroot->child->sibling->sibling->child != NULL){
+            fprintf(fp, "    jmp _case_%d_default_\n", initlabel);
+        }
+        else {
+            fprintf(fp, "    jmp _case_%d_end_\n", initlabel);
+        }
+
+        child = astroot->child->sibling->child;
+        while(child!=NULL){
+            if(child->dtype==0){
+                value = child->value.num;
+            }
+            else{
+                value= child->value.tval;
+            }
+            fprintf(fp, "\n_case_%d_%d_:\n", initlabel, value);
+            codegen(child);
+            fprintf(fp, "    jmp _case_%d_end_\n", initlabel);
+            child = child->sibling;
+        }
+        if (astroot->child->sibling->sibling->child != NULL){
+            fprintf(fp, "\n_case_%d_default_:\n", initlabel);
+            codegen(astroot->child->sibling->sibling->child);
+        }
+        fprintf(fp, "\n_case_%d_end_:\n", initlabel);
+        fprintf(fp, "\n; Switch statement end\n");
+        labelNumber++;
     }
 	else{
 		printf("Entering here : %d %d\n",astroot->gnode.non_term,EXPRESSION);
@@ -298,7 +350,7 @@ int main(int argc,char* argv[]){
     ASTNode *astroot = ast_root;
     if(check)
         codegen(astroot->child->sibling->sibling);
-    //_printAST(ast_root);
+    // _printAST(ast_root);
     fprintf(fp,"    mov rax, 0\n");
 	fprintf(fp,"    ret\n");
     char format[] = "db \"%d\", 10, 0";
