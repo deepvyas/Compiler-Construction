@@ -35,7 +35,8 @@ int getOffset(ASTNode *astroot, HashTreeNode *htroot){
         return -1;
     }
     else {
-        printf("offset %d\n", entry->offset);
+        //printf("key = %s\n", entry->key);
+        //printf("offset %d\n", entry->offset);
         return entry->offset;
     }
 }
@@ -56,6 +57,15 @@ void expression_cg(ASTNode *astroot, HashTreeNode *htroot){
             offset = getOffset(astroot->child, htroot); // memloc of arr
             offset = offset*encodingMul + getOffset(astroot->child->sibling, htroot); // memloc of index 2
             astroot->memoryLocation = offset;
+        }
+        else if (astroot->vartype == 0){
+            int memLoc = pushOffset+initialOffset;
+            pushOffset += INTEGEROFF;
+            fprintf(fp, "\n; Var number to memory\n");
+            fprintf(fp, "    mov qword [location+%d], %d\n", 
+                    memLoc, astroot->value.num); 
+            astroot->memoryLocation = memLoc;
+
         }
         if (astroot->sign == -1){
             fprintf(fp, ";negating var\n");
