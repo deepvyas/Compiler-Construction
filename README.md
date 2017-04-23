@@ -10,8 +10,8 @@ This project has been been implemented in a pipeline manner with stages consisti
 * Code Generation (NASM 64-bit compatible assembly).
 
 **Authors**
-* [Rishabh Joshi](www.github.com/rishabhjoshi)
-* [Deep Vyas](www.github.com/deepvyas)
+* [Rishabh Joshi](https://github.com/rishabhjoshi)
+* [Deep Vyas](https://github.com/deepvyas)
 
 ## Usage
 
