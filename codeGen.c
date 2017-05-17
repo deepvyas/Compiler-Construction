@@ -19,7 +19,9 @@ FILE *fp;
 #define INTEGEROFF 8
 
 int typeCheck(char *filename){
-    ast_root = makeAST(filename);
+    if (ast_root == NULL) // Checking this will ensure parse tree is not
+        // populated with wrong line numbers etc again for option 6
+        ast_root = makeAST(filename);
     htroot = initTree();
     int check = 1, flag = 1, check2 = 1;
     check = parseAST(ast_root, htroot);

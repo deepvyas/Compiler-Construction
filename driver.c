@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
         return 0;
     }
     int level = 4;
-    char message[] = "Compiler completely working. Symbol table, Typechecking, semantic checking, code gen work";
+    char message[] = "Compiler completely working. Symbol table, Typechecking, semantic checking, code gen work\n";
     printf("LEVEL %d: %s", level, message);
     fp = fopen(argv[2], "w");
     
@@ -37,11 +37,12 @@ int main(int argc, char *argv[]){
     check = typeCheck(argv[1]);
     int task;
 
-    initTable();
-    populateGrammar();
-    compute_first();
-    compute_follow();
-    createParsingTable();
+    // initTable(); called in makeAST which is called in typeCheck
+    // Redundant calls will create problems with line numbers
+    // populateGrammar();
+    // compute_first();
+    // compute_follow();
+    // createParsingTable();
 
     //while(1){
         printf("\nEnter a number corresponding to the tasks : \n");
@@ -59,7 +60,8 @@ int main(int argc, char *argv[]){
         switch(task){
             case 1: printTokenList(argv[1]);
                     break;
-            case 2: parseInputSourceCode(argv[1], 0);
+            case 2: //parseInputSourceCode(argv[1], 0);
+                    // Redundant call removed. LineNumbers in option2 wrong
                     printParseTree(stdot);
                     break;
             case 3: _printAST(ast_root);

@@ -628,6 +628,7 @@ void removeComments(char *testcaseFile){
 
 void printTokenList(char *testfile){
 	FILE *fp = fopen(testfile, "r");
+    line_no=1; // Initialize line numbers again else wrong come in option1
 	tokenInfo *token;
 	token = getToken(&fp);
 	while(token != NULL){
