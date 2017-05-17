@@ -312,8 +312,11 @@ int parseAST(ASTNode *root,HashTreeNode *htroot){
             t2 = root->child->arrtype;
         if (chec2 == 0 || check == 0) flag = 0;
         if (t1 != t2){
+        	if(root->child->vartype==2)
+            printf("ERROR : Type mismatch at line %d.\n", root->child->child->tokenptr->line_no);/////////////////////////////
+        	else
             printf("ERROR : Type mismatch at line %d.\n", root->child->tokenptr->line_no);/////////////////////////////
-            flag = 0;
+          flag = 0;
         }
         if (verbose)
             printf("In assignment statement types are %d and %d\n", t1, t2);
