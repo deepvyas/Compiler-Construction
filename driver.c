@@ -34,7 +34,9 @@ int main(int argc, char *argv[]){
     FILE *stdot = stdout;
     ASTNode *astroot = ast_root;
     int check;
+    fclose(stdout);
     check = typeCheck(argv[1]);
+    freopen("/dev/tty", "w", stdout);
     int task;
 
     // initTable(); called in makeAST which is called in typeCheck
